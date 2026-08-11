@@ -1,0 +1,10 @@
+# single-package repo, but pnpm 10+ reads its settings from this file.
+# `packages` is listed explicitly: a pnpm-workspace.yaml without it is rejected
+# by some pnpm versions, which is what broke CI in the reference project.
+packages:
+  - "."
+
+# both ship prebuilt native binaries and need their install script to run
+allowBuilds:
+  "@tailwindcss/oxide": true
+  esbuild: true

@@ -1,0 +1,85 @@
+[package]
+name = "spcycle-launcher"
+version = "0.1.0"
+description = "Singleplayer launcher for The Cycle: Frontier"
+edition = "2021"
+# steamroom (added in phase 2) is edition 2024
+rust-version = "1.85"
+
+[lib]
+name = "spcycle_lib"
+crate-type = ["lib", "cdylib", "staticlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-dialog = "2"
+tauri-plugin-store = "2"
+tauri-plugin-log = "2"
+# two launchers would mean two mongods fighting over one dbpath
+tauri-plugin-single-instance = "2"
+tauri-plugin-updater = "2"
+# relaunch after an update installs
+tauri-plugin-process = "2"
+
+# Discord Rich Presence over the local IPC socket. Pure Rust, no native SDK, and
+# it authenticates nothing — the application id is public.
+discord-rich-presence = "1"
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tokio = { version = "1", features = [
+    "rt-multi-thread",
+    "process",
+    "io-util",
+    "macros",
+    "time",
+    "fs",
+    "sync",
+    "net",
+] }
+log = "0.4"
+dirs = "6"
+
+# Native Steam depot download, in place of DepotDownloader.exe. Pinned exactly:
+# the crate is pre-1.0, where minor bumps are breaking by convention.
+steamroom = "=0.3.0"
+steamroom-client = "=0.3.0"
+# the depot blob is a raw zlib stream
+flate2 = "1"
+
+# component downloads. rustls rather than openssl, so the AppImage stays portable.
+reqwest = { version = "0.12", default-features = false, features = [
+    "rustls-tls",
+    "json",
+    "stream",
+] }
+futures-util = "0.3"
+sha2 = "0.10"
+# certificate thumbprints. SHA-1 is not a security choice here: it is the
+# identity both Windows' and Wine's certificate stores key on.
+sha1 = "0.10"
+# `deflate` only: we control both component archives, so the other five
+# compression methods `zip` can link are dead weight.
+zip = { version = "2", default-features = false, features = ["deflate"] }
+# "open install folder", steam:// urls
+open = "5"
+# process detection and free-space checks
+sysinfo = { version = "0.32", default-features = false, features = ["system", "disk"] }
+
+[target.'cfg(windows)'.dependencies]
+# HKCU\Software\Valve\Steam\SteamPath — three lines instead of forty of windows-sys
+winreg = "0.52"
+
+# Optimise the dependencies, not our own code: a debug-build sha1 hashes at
+# ~80 MB/s, which makes a verify pass over a full install take eight minutes in
+# `tauri dev`. Our crate stays at opt-level 0, so rebuilds stay fast.
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.release]
+lto = true
+strip = true

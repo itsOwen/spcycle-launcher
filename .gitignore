@@ -1,0 +1,16 @@
+node_modules/
+dist/
+artifacts/
+src-tauri/target/
+src-tauri/gen/schemas/
+
+*.log
+
+# the depot blob is fetched by tools/fetch-depot-blob.sh, never committed
+src-tauri/resources/depot.blob
+
+# the updater signing key. never commit this: publishing it means rotating the
+# key, which orphans every installed copy.
+.secrets/
+*.key
+*.key.password

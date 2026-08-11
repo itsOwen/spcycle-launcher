@@ -1,0 +1,21 @@
+{
+  "version": "b8",
+  "files": {
+    "server": {
+      "url": "https://github.com/deiteris/Prospect/releases/download/b8/Prospect.Server.Api-S2.zip",
+      "sha256": "b2d0c5a076628163487318c7cde40111a9f043b01f6f3ed34e42a4df5ecee2f5",
+      "size": 56724075
+    },
+    "loaderpack": {
+      "url": "https://github.com/deiteris/Prospect/releases/download/b8/LoaderPack.zip",
+      "sha256": "332922396ba5785ac59daa346aa6ce7c2b8b2a4fd6378ea17e93a1438daa6f9f",
+      "size": 8087316,
+      "strip_prefix": "LoaderPack"
+    },
+    "mongod": {
+      "url": "https://github.com/itsOwen/spcycle-launcher/releases/latest/download/mongod-windows.zip",
+      "sha256": "e64120e29a245673936060dc13d544ca210ebf37cde332f632c625aa7a882307",
+      "size": 29061841
+    }
+  }
+}

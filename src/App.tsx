@@ -1,0 +1,222 @@
+import { useCallback, useEffect, useRef, useState } from "react";
+import * as ipc from "@/lib/ipc";
+import type { Phase, Services, Snapshot } from "@/lib/ipc";
+import { bytes } from "@/lib/format";
+import { Titlebar } from "./components/Titlebar";
+import { Rail, type Tab } from "./components/Rail";
+import { LaunchButton } from "./components/LaunchButton";
+import { ProgressBar, type Progress } from "./components/ProgressBar";
+import { Toasts, type Toast } from "./components/Toasts";
+import { PlayTab } from "./components/PlayTab";
+import { FilesTab } from "./components/FilesTab";
+import { ServerTab } from "./components/ServerTab";
+import { ConfigTab } from "./components/ConfigTab";
+import { UninstallDialog } from "./components/UninstallDialog";
+import { PreflightDialog } from "./components/PreflightDialog";
+
+const DOWN: Services = { mongo: "down", server: "down", steam: "down" };
+
+const IDLE_POLL_MS = 3000;
+
+const BOOT: Snapshot = {
+  phase: "NEEDS_COMPONENTS",
+  install: { gameFiles: false, components: false, manifestId: "0", partial: false },
+  services: DOWN,
+  launcherVersion: "",
+  componentsVersion: null,
+  gameBytes: 0,
+  freeBytes: 0,
+  gameDirectory: "",
+};
+
+const ZERO: Progress = {
+  done: 0,
+  total: 0,
+  label: "",
+  bytesPerSecond: 0,
+  secondsLeft: null,
+};
+
+export default function App() {
+  const [tab, setTab] = useState<Tab>("play");
+  const [snap, setSnap] = useState<Snapshot>(BOOT);
+  const [progress, setProgress] = useState<Progress>(ZERO);
+  const [showBar, setShowBar] = useState(false);
+  const [pausable, setPausable] = useState(false);
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [playingSince, setPlayingSince] = useState<number | null>(null);
+  const [uninstalling, setUninstalling] = useState(false);
+  const [checks, setChecks] = useState<ipc.Preflight | null>(null);
+
+  // exponential smoothing: raw byte rates are far too jittery to show
+  const rateRef = useRef({ at: 0, done: 0, smoothed: 0 });
+
+  const refresh = useCallback(() => {
+    ipc.launcherState().then(setSnap, () => {});
+  }, []);
+
+  const toast = useCallback((text: string, level: 0 | 1 | 2) => {
+    setToasts((prev) => {
+      // consecutive duplicates are noise, not information
+      if (prev.length > 0 && prev[prev.length - 1].text === text) return prev;
+      const next = [...prev, { id: Date.now() + Math.random(), text, level }];
+      return next.slice(-5);
+    });
+  }, []);
+
+  const dismiss = useCallback((id: number) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  // auto-dismiss info and success; errors stay until clicked
+  useEffect(() => {
+    const soft = toasts.find((t) => t.level < 2);
+    if (!soft) return;
+    const id = setTimeout(() => dismiss(soft.id), 15000);
+    return () => clearTimeout(id);
+  }, [toasts, dismiss]);
+
+  useEffect(() => {
+    const unlisten: Promise<() => void>[] = [
+      ipc.onPhase((phase: Phase) => {
+        setSnap((s) => ({ ...s, phase }));
+        setPlayingSince((was) =>
+          phase === "PLAYING" ? (was ?? Date.now()) : null,
+        );
+        // a phase change means the rest of the snapshot may be stale too
+        refresh();
+      }),
+
+      ipc.onServices((services) => setSnap((s) => ({ ...s, services }))),
+
+      ipc.onProgress((done, total, label) => {
+        const now = performance.now();
+        const prev = rateRef.current;
+        let smoothed = prev.smoothed;
+        if (prev.at > 0 && now > prev.at && done >= prev.done) {
+          const instant = ((done - prev.done) * 1000) / (now - prev.at);
+          smoothed = prev.smoothed === 0 ? instant : prev.smoothed * 0.8 + instant * 0.2;
+        }
+        rateRef.current = { at: now, done, smoothed };
+        setProgress({
+          done,
+          total,
+          label,
+          bytesPerSecond: smoothed,
+          secondsLeft:
+            total > done && smoothed > 1 ? (total - done) / smoothed : null,
+        });
+      }),
+
+      ipc.onProgressBar((show) => {
+        setShowBar(show);
+        if (!show) {
+          rateRef.current = { at: 0, done: 0, smoothed: 0 };
+          setProgress(ZERO);
+        }
+      }),
+
+      ipc.onProgressPausable(setPausable),
+
+      ipc.onNotify(toast),
+    ];
+
+    refresh();
+    return () => {
+      unlisten.forEach((p) => p.then((f) => f()).catch(() => {}));
+    };
+  }, [refresh, toast]);
+
+  // one environment check on boot; only shown if something is actually wrong
+  useEffect(() => {
+    ipc.preflight().then(
+      (report) => {
+        if (!report.allOk) setChecks(report);
+      },
+      () => {},
+    );
+  }, []);
+
+  // idle poll: catches state changed outside the launcher. skipped while
+  // something is running, since events cover it.
+  useEffect(() => {
+    const idle = !showBar && snap.phase !== "PLAYING" && snap.phase !== "STARTING";
+    if (!idle) return;
+    const id = setInterval(refresh, IDLE_POLL_MS);
+    return () => clearInterval(id);
+  }, [showBar, snap.phase, refresh]);
+
+  const onAction = useCallback(
+    (action: "install" | "pause" | "play" | "stop") => {
+      const run = {
+        install: ipc.installGame,
+        pause: ipc.pauseDownload,
+        play: ipc.play,
+        stop: ipc.stopGame,
+      }[action];
+      run().catch((e: unknown) => toast(String(e), 2));
+    },
+    [toast],
+  );
+
+  const sub =
+    snap.phase === "NEEDS_GAME"
+      ? bytes(snap.freeBytes) + " free"
+      : snap.phase === "PAUSED"
+        ? bytes(snap.gameBytes) + " on disk"
+        : undefined;
+
+  return (
+    <div className="flex h-full flex-col bg-void">
+      <Titlebar version={snap.launcherVersion} />
+
+      <div className="flex min-h-0 flex-1">
+        <Rail tab={tab} onTab={setTab} services={snap.services} />
+
+        <main className="relative flex min-w-0 flex-1 flex-col p-6">
+          <div className="min-h-0 flex-1 overflow-auto">
+            {tab === "play" && <PlayTab snap={snap} since={playingSince} />}
+            {tab === "files" && (
+              <FilesTab
+                snap={snap}
+                onUninstall={() => setUninstalling(true)}
+                onChanged={refresh}
+              />
+            )}
+            {tab === "server" && <ServerTab services={snap.services} />}
+            {tab === "config" && <ConfigTab version={snap.launcherVersion} />}
+          </div>
+
+          <div className="mt-6 flex shrink-0 items-end gap-6">
+            <div className="min-w-0 flex-1">
+              {showBar && (
+                <ProgressBar
+                  progress={progress}
+                  pausable={pausable}
+                  onPause={() => onAction("pause")}
+                />
+              )}
+            </div>
+            <LaunchButton phase={snap.phase} sub={sub} onAction={onAction} />
+          </div>
+
+          <Toasts toasts={toasts} onDismiss={dismiss} />
+
+          {uninstalling && (
+            <UninstallDialog
+              onClose={() => setUninstalling(false)}
+              onDone={() => {
+                setUninstalling(false);
+                refresh();
+              }}
+            />
+          )}
+
+          {checks && (
+            <PreflightDialog report={checks} onDismiss={() => setChecks(null)} />
+          )}
+        </main>
+      </div>
+    </div>
+  );
+}
