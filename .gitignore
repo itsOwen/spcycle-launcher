@@ -24,3 +24,6 @@ out/
 
 # container build output (bind-mounted, not docker layer)
 src-tauri/target/
+
+# pnpm store, written by the container builds
+.pnpm-store/

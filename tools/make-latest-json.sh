@@ -32,11 +32,14 @@ for platform in "${!GLOB[@]}"; do
         exit 1
     fi
     name=$(basename "$file")
+    # github renames an asset's spaces to dots on upload, so the url it serves is
+    # not the name on disk. get this wrong and every update 404s.
+    url_name=${name// /.}
     signature=$(tr -d '\n' < "$sig")
 
     [[ -n $entries ]] && entries+=","
     entries+=$(printf '\n    "%s": { "signature": "%s", "url": "%s/%s" }' \
-        "$platform" "$signature" "$BASE" "$name")
+        "$platform" "$signature" "$BASE" "$url_name")
 done
 
 if [[ -z $entries ]]; then

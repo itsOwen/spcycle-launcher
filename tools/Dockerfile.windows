@@ -6,10 +6,14 @@ FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 ENV CARGO_TERM_COLOR=always
 
-# clang and lld are what cargo-xwin drives; nsis is the bundler
+# clang and lld are what cargo-xwin drives; nsis is the bundler. appindicator is
+# a linux tray library and has no business in a windows build, but the tauri cli
+# probes the host for it whenever the tray-icon feature is on and panics without
+# it — "Can't detect any appindicator library" — after the whole crate compiles.
 RUN apt-get update && apt-get install -y --no-install-recommends \
       build-essential curl ca-certificates file git pkg-config python3 \
       clang lld llvm nsis nsis-pluginapi xz-utils zstd \
+      libayatana-appindicator3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # tauri shells out to the bare name `makensis.exe`; ubuntu ships `makensis`.

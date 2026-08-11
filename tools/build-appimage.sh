@@ -67,6 +67,53 @@ pnpm install --frozen-lockfile
 pnpm tauri build --bundles appimage
 
 BUNDLE="${CARGO_TARGET_DIR:-src-tauri/target}/release/bundle/appimage"
+APPDIR="$(find "$BUNDLE" -maxdepth 1 -type d -name '*.AppDir' -print -quit)"
+APPIMAGE="$(find "$BUNDLE" -maxdepth 1 -name '*.AppImage' -print -quit)"
+[ -n "$APPDIR" ] && [ -n "$APPIMAGE" ] || { echo "no AppImage was produced" >&2; exit 1; }
+
+# linuxdeploy pulls the build machine's graphics stack into the bundle, and at run
+# time those override the host's real drivers: "Could not create default EGL
+# display: EGL_BAD_PARAMETER" and a blank window. the host always has its own.
+removed="$(find "$APPDIR" \( -name 'libwayland-*' -o -name 'libEGL.so*' -o -name 'libGL.so*' \
+                            -o -name 'libdrm.so*' -o -name 'libgbm.so*' -o -name 'libglapi.so*' \) \
+                -print -delete)"
+[ -n "$removed" ] && { echo "==> removed the bundled graphics stack:"; echo "$removed"; }
+
+# linuxdeploy bakes a relative libexec path into webkit, which resolves against the
+# cwd rather than the mount point, so the webview dies unless it is told the truth
+wk="$(find "$APPDIR" -type d -name 'webkit2gtk-4.1' -print -quit 2>/dev/null || true)"
+if [ -n "$wk" ]; then
+    mkdir -p "$APPDIR/apprun-hooks"
+    printf '#!/usr/bin/env bash\nexport WEBKIT_EXEC_PATH="${APPDIR}/%s"\n' "${wk#"$APPDIR"/}" \
+        > "$APPDIR/apprun-hooks/zzz-spcycle-webkit.sh"
+    grep -q 'zzz-spcycle-webkit.sh' "$APPDIR/AppRun" || sed -i \
+        's|^exec "\$this_dir"/AppRun\.wrapped|source "$this_dir"/apprun-hooks/"zzz-spcycle-webkit.sh"\n\nexec "$this_dir"/AppRun.wrapped|' \
+        "$APPDIR/AppRun"
+    grep -q 'zzz-spcycle-webkit.sh' "$APPDIR/AppRun" \
+        || { echo "could not add the webkit hook to AppRun; its layout changed" >&2; exit 1; }
+fi
+
+# the .AppImage tauri produced still holds what was just deleted, so rebuild it
+TOOL="$(find "${CARGO_TARGET_DIR:-src-tauri/target}" "$HOME/.cache/tauri" -maxdepth 5 \
+          -name 'linuxdeploy-plugin-appimage*.AppImage' -print -quit 2>/dev/null || true)"
+[ -n "$TOOL" ] || { echo "the appimage plugin is missing, so the bundle still has the libraries" >&2; exit 1; }
+chmod +x "$TOOL"
+echo "==> repackaging"
+( cd "$(dirname "$APPIMAGE")" \
+  && APPIMAGE_EXTRACT_AND_RUN=1 OUTPUT="$(basename "$APPIMAGE")" \
+     "$(readlink -f "$TOOL")" --appdir "$(readlink -f "$APPDIR")" )
+
+# repackaging changed the bytes, so tauri's signature no longer matches them and
+# every updater would reject it. sign what we are actually shipping.
+if [ -n "${TAURI_SIGNING_PRIVATE_KEY:-}" ]; then
+    echo "==> re-signing"
+    rm -f "$APPIMAGE.sig"
+    pnpm tauri signer sign \
+        --private-key "$TAURI_SIGNING_PRIVATE_KEY" \
+        --password "${TAURI_SIGNING_PRIVATE_KEY_PASSWORD:-}" \
+        "$APPIMAGE"
+    [ -f "$APPIMAGE.sig" ] || { echo "re-signing produced no .sig" >&2; exit 1; }
+fi
+
 mkdir -p out
-found=$(find "$BUNDLE" -maxdepth 1 -name '*.AppImage*' -exec cp {} out/ \; -print | head -1)
-[ -n "$found" ] || { echo "no AppImage was produced" >&2; exit 1; }
+find "$BUNDLE" -maxdepth 1 -name '*.AppImage*' -exec cp {} out/ \;
