@@ -40,7 +40,6 @@ ENV NO_STRIP=1
 CMD ["bash", "-lc", "\
   set -euo pipefail; \
   [ -f src-tauri/resources/depot.blob ] || { echo 'depot.blob is missing. run tools/fetch-depot-blob.sh on the host first.' >&2; exit 1; }; \
-  [ -f src-tauri/resources/dwmapi.dll ] || { echo 'dwmapi.dll is missing. run tools/build-client-patch.sh on the host first.' >&2; exit 1; }; \
   pnpm tauri build --bundles appimage; \
   mkdir -p /out; \
   find src-tauri/target/release/bundle/appimage -maxdepth 1 -name '*.AppImage*' -exec cp {} /out/ \\; ; \

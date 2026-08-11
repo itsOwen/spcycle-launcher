@@ -26,8 +26,8 @@ mkdir -p "$OUT"
 }
 
 case "$(uname -s)" in
-  Linux)          BUNDLE=appimage; OURS='*.AppImage' ;;
-  MINGW*|MSYS*|CYGWIN*) BUNDLE=nsis; OURS='*-setup.exe' ;;
+  Linux)          PLATFORM=linux;   OURS='*.AppImage' ;;
+  MINGW*|MSYS*|CYGWIN*) PLATFORM=windows; OURS='*-setup.exe' ;;
   *) echo "unsupported platform $(uname -s)" >&2; exit 1 ;;
 esac
 
@@ -35,25 +35,35 @@ echo "==> gates"
 pnpm typecheck
 cargo test --manifest-path src-tauri/Cargo.toml
 
-echo "==> building $BUNDLE"
-TAURI_SIGNING_PRIVATE_KEY="$(cat "$KEY")" \
-TAURI_SIGNING_PRIVATE_KEY_PASSWORD="$(cat "$ROOT/.secrets/spcycle.key.password")" \
-  pnpm tauri build --bundles "$BUNDLE"
-
-echo "==> collecting"
 # out/ is shared across platforms so it is never wiped, but this platform's older
 # artifact must go or make-latest-json.sh publishes it under the new version
 find "$OUT" -maxdepth 1 \( -name "$OURS" -o -name "$OURS.sig" \) -type f -delete
 
-found=0
-for pattern in '*-setup.exe' '*.AppImage'; do
-  while IFS= read -r f; do
-    cp "$f" "$OUT/"
-    [ -f "$f.sig" ] && cp "$f.sig" "$OUT/"
-    found=1
-  done < <(find src-tauri/target/release/bundle -name "$pattern" -type f)
-done
-[ "$found" = 1 ] || { echo "no installer was produced" >&2; exit 1; }
+if [ "$PLATFORM" = linux ]; then
+    # ubuntu 22.04 in docker, never the host. glibc symbols are versioned, so an
+    # appimage linked here starts on this machine and nowhere older — which is
+    # most of the people downloading it. lands straight in out/, signed.
+    echo "==> building the appimage (ubuntu 22.04, via docker)"
+    ./tools/build-appimage.sh --sign
+else
+    echo "==> building the installer"
+    TAURI_SIGNING_PRIVATE_KEY="$(cat "$KEY")" \
+    TAURI_SIGNING_PRIVATE_KEY_PASSWORD="$(cat "$ROOT/.secrets/spcycle.key.password")" \
+      pnpm tauri build --bundles nsis
+
+    echo "==> collecting"
+    while IFS= read -r f; do
+        cp "$f" "$OUT/"
+        [ -f "$f.sig" ] && cp "$f.sig" "$OUT/"
+    done < <(find src-tauri/target/release/bundle -name '*-setup.exe' -type f)
+fi
+
+# the signature is what the updater checks; an installer without one is one every
+# client refuses, and make-latest-json.sh would rather fail than emit half a file
+built=$(find "$OUT" -maxdepth 1 -name "$OURS" -type f -print -quit)
+[ -n "$built" ] || { echo "no installer was produced for $PLATFORM" >&2; exit 1; }
+[ -f "$built.sig" ] || { echo "$built has no .sig beside it" >&2; exit 1; }
+echo "    $(basename "$built")"
 
 echo "==> component assets"
 ./tools/repack-mongod.sh
