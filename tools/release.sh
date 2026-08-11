@@ -72,19 +72,9 @@ done
 find "$OUT" -maxdepth 1 \( -name '*.AppImage' -o -name '*-setup.exe' \) -type f -print -quit \
     | grep -q . || { echo "no installer was produced" >&2; exit 1; }
 
-echo "==> component assets"
-./tools/repack-mongod.sh
-for plat in windows linux; do
-  want=$(python3 -c "import json,sys; print(json.load(open(f'tools/components-{sys.argv[1]}.json'))['files']['mongod']['sha256'])" "$plat")
-  got=$(sha256sum "artifacts/mongod-$plat.zip" | cut -d' ' -f1)
-  if [ "$want" != "$got" ]; then
-    echo "mongod-$plat.zip hashes to $got but components-$plat.json pins $want." >&2
-    echo "re-run tools/repack-mongod.sh and commit the updated manifest." >&2
-    exit 1
-  fi
-  cp "artifacts/mongod-$plat.zip" "$OUT/"
-done
-cp tools/components-windows.json tools/components-linux.json "$OUT/"
+# the components are not here on purpose. they live on their own fixed tag, so a
+# release that forgot one cannot break installs for everyone on that platform.
+# see tools/publish-components.sh.
 
 echo "==> updater manifest"
 ./tools/make-latest-json.sh "$TAG" "$OUT"

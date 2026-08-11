@@ -11,10 +11,21 @@ use tauri::AppHandle;
 use crate::{progress, settings, show_bar};
 
 // overridable to try a candidate manifest; one per platform, since mongod differs
+// a fixed tag, not releases/latest: the components change on their own schedule
+// and every launcher release would otherwise have to carry all four assets or
+// break component installs for everyone on the platform whose one went missing.
 const MANIFEST_URL: &str = if cfg!(windows) {
-    "https://github.com/itsOwen/spcycle-launcher/releases/latest/download/components-windows.json"
+    concat!(
+        "https://github.com/itsOwen/spcycle-launcher/releases/download/",
+        "components-b8",
+        "/components-windows.json"
+    )
 } else {
-    "https://github.com/itsOwen/spcycle-launcher/releases/latest/download/components-linux.json"
+    concat!(
+        "https://github.com/itsOwen/spcycle-launcher/releases/download/",
+        "components-b8",
+        "/components-linux.json"
+    )
 };
 const MANIFEST_URL_ENV: &str = "SPCYCLE_COMPONENTS_URL";
 

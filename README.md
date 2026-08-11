@@ -48,6 +48,7 @@ existing installs will accept.
 |---|---|
 | `tools/fetch-depot-blob.sh` | fetch the depot manifest |
 | `tools/repack-mongod.sh` | build the bundled mongod archives |
+| `tools/publish-components.sh` | publish the component assets to their own fixed tag |
 | `tools/release.sh` | build and publish a release |
 | `tools/check-windows.sh` | type-check the Windows-only code from Linux |
 | `tools/build-appimage.sh` | build the AppImage in docker |

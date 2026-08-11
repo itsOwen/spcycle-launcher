@@ -13,7 +13,7 @@
       "strip_prefix": "LoaderPack"
     },
     "mongod": {
-      "url": "https://github.com/itsOwen/spcycle-launcher/releases/latest/download/mongod-windows.zip",
+      "url": "https://github.com/itsOwen/spcycle-launcher/releases/download/components-b8/mongod-windows.zip",
       "sha256": "e64120e29a245673936060dc13d544ca210ebf37cde332f632c625aa7a882307",
       "size": 29061841
     }
