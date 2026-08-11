@@ -109,12 +109,16 @@ fn wrap_unix(app: &AppHandle, exe: &Path, prefix_root: &Path) -> Result<Command,
 
 #[cfg(unix)]
 fn proton_exe(app: &AppHandle, info: &compat::CompatInfo) -> Option<String> {
-    if let Some(chosen) = settings::proton_path(app) {
-        if Path::new(&chosen).is_file() {
-            return Some(chosen);
+    match settings::proton_path(app) {
+        Some(chosen) if Path::new(&chosen).is_file() => Some(chosen),
+        // falling back picks a different build than the user chose, and prime_prefix
+        // reads that as "the tool changed" and wipes the prefix. loud on purpose.
+        other => {
+            let fallback = info.proton.first().cloned();
+            log::warn!("no usable proton from settings ({other:?}); falling back to {fallback:?}");
+            fallback
         }
     }
-    info.proton.first().cloned()
 }
 
 // build the prefix ahead of the real run, and rebuild it when proton changes
@@ -137,7 +141,11 @@ fn prime_prefix(proton: &str, steam_root: &str, compatdata: &Path) {
     let same_build = previous.lines().next().is_some_and(|p| p == id);
     let mut stash = None;
     if !previous.is_empty() && !same_build {
-        log::info!("compatibility tool changed build, rebuilding the wine prefix");
+        log::warn!(
+            "rebuilding {}: it was built with {}, and this launch resolved {id}",
+            compatdata.display(),
+            previous.lines().next().unwrap_or("(nothing)"),
+        );
         // graphics settings and keybinds live in the prefix; carry them over the wipe
         let saved = compatdata.with_extension("settings-stash");
         if !saved.exists() {

@@ -3,6 +3,7 @@ import * as ipc from "@/lib/ipc";
 import type { Phase, Services, Snapshot } from "@/lib/ipc";
 import { bytes } from "@/lib/format";
 import { Titlebar } from "./components/Titlebar";
+import { AboutTab } from "./components/AboutTab";
 import { Rail, type Tab } from "./components/Rail";
 import { LaunchButton } from "./components/LaunchButton";
 import { ProgressBar, type Progress } from "./components/ProgressBar";
@@ -217,6 +218,7 @@ export default function App() {
             {tab === "config" && (
               <ConfigTab version={snap.launcherVersion} update={update} />
             )}
+            {tab === "about" && <AboutTab version={snap.launcherVersion} />}
           </div>
 
           <div className="rise mt-6 flex shrink-0 items-end gap-6" style={{ animationDelay: "120ms" }}>

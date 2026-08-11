@@ -111,6 +111,7 @@ export const uninstallEverything = () => invoke<void>("uninstall_everything");
 export const pickGameDirectory = () => invoke<string | null>("pick_game_directory");
 export const openGameFolder = () => invoke<void>("open_game_folder");
 export const openLauncherFolder = () => invoke<void>("open_launcher_folder");
+export const openLink = (url: string) => invoke<void>("open_link", { url });
 export const logTail = (which: LogKind, lines = 200) =>
   invoke<string>("log_tail", { which, lines });
 

@@ -244,7 +244,7 @@
 @keyframes toast-in {
   from {
     opacity: 0;
-    transform: translateX(-14px);
+    transform: translateX(14px);
   }
   to {
     opacity: 1;

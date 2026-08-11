@@ -17,11 +17,12 @@ export function Toasts({
 
   return (
     <div
-      className="pointer-events-none absolute bottom-4 left-4 z-50 flex w-[340px] flex-col gap-2"
+      className="pointer-events-none absolute top-4 right-4 z-50 flex w-[340px] flex-col gap-2"
       role="status"
       aria-live="polite"
     >
-      {toasts.map((t) => (
+      {/* newest first: the stack hangs off the top edge, so it grows downwards */}
+      {[...toasts].reverse().map((t) => (
         <button
           key={t.id}
           onClick={() => onDismiss(t.id)}

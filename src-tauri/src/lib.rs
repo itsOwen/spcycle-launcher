@@ -281,6 +281,17 @@ fn log_tail(app: AppHandle, which: String, lines: usize) -> String {
     }
 }
 
+// the about tab's links. an allowlist because this is a webview handing the host
+// a string to open: anything but http(s) is a scheme that runs something.
+#[tauri::command]
+fn open_link(url: String) -> CmdResult<()> {
+    if !url.starts_with("https://") && !url.starts_with("http://") {
+        return Err(CommandError::Message(format!("refusing to open {url}")));
+    }
+    open::that_detached(&url)
+        .map_err(|e| CommandError::Message(format!("could not open {url}: {e}")))
+}
+
 #[tauri::command]
 fn open_launcher_folder(app: AppHandle) -> CmdResult<()> {
     open_path(&settings::app_data(&app))
@@ -570,6 +581,7 @@ pub fn run() {
             log_tail,
             open_launcher_folder,
             open_game_folder,
+            open_link,
             pick_game_directory,
             depot_info,
             detect_compat_tools,

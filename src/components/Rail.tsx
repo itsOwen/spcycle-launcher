@@ -1,6 +1,6 @@
 import type { ServiceState, Services } from "@/lib/ipc";
 
-export const TABS = ["play", "files", "server", "config"] as const;
+export const TABS = ["play", "files", "server", "config", "about"] as const;
 export type Tab = (typeof TABS)[number];
 
 const LED_ROWS: { key: keyof Services; label: string }[] = [
