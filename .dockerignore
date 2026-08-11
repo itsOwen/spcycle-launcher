@@ -1,0 +1,16 @@
+# the appimage build copies this directory into the container. target/ alone is
+# 32 GB of host-built artifacts that the container must not reuse anyway — it
+# builds against ubuntu's glibc, which is the whole point.
+src-tauri/target
+node_modules
+dist
+out
+artifacts
+.git
+
+# never let a signing key into an image layer
+.secrets
+*.key
+*.key.password
+*.pfx
+*.p12
