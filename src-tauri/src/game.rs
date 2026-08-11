@@ -118,9 +118,6 @@ fn install_client_patch(win64: &Path) {
 
 pub const LOADER_EXE: &str = "Prospect.Client.Loader.exe";
 pub const SERVER_EXE: &str = "Prospect.Server.Api.exe";
-// steamworks reads this; missing it is "Login Failed. Error code: 3"
-const STEAM_APPID_TXT: &str = "steam_appid.txt";
-
 // how long the server gets to start serving
 const SERVER_READY_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(60);
 // how long the game gets to appear after the loader starts
@@ -292,14 +289,9 @@ pub async fn play(app: &AppHandle) -> Result<i32, GameError> {
     wait_for_server(app, &mut down).await?;
     crate::set_service(app, |s| s.server = ServiceState::Up);
 
-    // 5 — the client loader.
+    // 5 — the client loader. steam_appid.txt is not checked for: the loader writes
+    // it itself, so a missing one only ever triggered a restage on first launch.
     let win64 = settings::win64_dir(app);
-    if !win64.join(STEAM_APPID_TXT).is_file() {
-        log::warn!("{STEAM_APPID_TXT} is missing from Win64; restaging the components");
-        crate::components::ensure(app)
-            .await
-            .map_err(|e| GameError::Message(e.to_string()))?;
-    }
     let loader_exe = win64.join(LOADER_EXE);
     if !loader_exe.is_file() {
         return Err(GameError::Message(format!(

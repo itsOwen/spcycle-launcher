@@ -14,8 +14,27 @@ pub const SERVER_HTTPS: u16 = 8443;
 // not 27017, so we never collide with a mongodb the user installed themselves
 pub const MONGO_PORT_BASE: u16 = 27055;
 
+// storage.json, read directly. split out so it can be tested without an AppHandle.
+fn from_disk(path: &std::path::Path, key: &str) -> Option<serde_json::Value> {
+    let raw = std::fs::read_to_string(path).ok()?;
+    serde_json::from_str::<serde_json::Value>(&raw)
+        .ok()?
+        .get(key)
+        .cloned()
+}
+
+// the plugin's store, then the file behind it. a store that is momentarily
+// unavailable used to hand back the default for every key, silently: a launch
+// would resolve a proton the user never chose (and prime_prefix then wipes the
+// prefix over the difference), or look for the game in the default directory
+// and offer to download all 15 GiB of it again.
 fn get(app: &AppHandle, key: &str) -> Option<serde_json::Value> {
-    app.store(STORE).ok()?.get(key)
+    if let Ok(store) = app.store(STORE) {
+        if let Some(v) = store.get(key) {
+            return Some(v);
+        }
+    }
+    from_disk(&app_data(app).join(STORE), key)
 }
 
 pub fn set(app: &AppHandle, key: &str, value: serde_json::Value) {
@@ -177,4 +196,54 @@ pub fn autorun_steam(app: &AppHandle) -> bool {
 #[cfg(unix)]
 pub fn proton_path(app: &AppHandle) -> Option<String> {
     string(app, "proton_path")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // the fallback is only worth having if it reads the same shape the plugin
+    // writes: a flat object, values as-is, absent keys as None.
+    #[test]
+    fn the_disk_fallback_reads_what_the_store_writes() {
+        let dir = std::env::temp_dir().join("spcycle-settings-fallback");
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join(STORE);
+
+        assert_eq!(
+            from_disk(&path, "proton_path"),
+            None,
+            "no file is not a panic"
+        );
+
+        std::fs::write(
+            &path,
+            r#"{"proton_path":"/x/proton","mongo_port":27055,"autorun_steam":false}"#,
+        )
+        .unwrap();
+        assert_eq!(
+            from_disk(&path, "proton_path").and_then(|v| v.as_str().map(String::from)),
+            Some("/x/proton".into()),
+            "the chosen proton must survive a store that is not answering"
+        );
+        assert_eq!(
+            from_disk(&path, "mongo_port").and_then(|v| v.as_u64()),
+            Some(27055)
+        );
+        assert_eq!(
+            from_disk(&path, "autorun_steam").and_then(|v| v.as_bool()),
+            Some(false)
+        );
+        assert_eq!(from_disk(&path, "missing"), None);
+
+        std::fs::write(&path, "{ not json").unwrap();
+        assert_eq!(
+            from_disk(&path, "proton_path"),
+            None,
+            "a corrupt file is not a panic"
+        );
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 }
