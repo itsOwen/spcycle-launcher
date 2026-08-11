@@ -233,6 +233,14 @@ pub async fn play(app: &AppHandle) -> Result<i32, GameError> {
     down.mongo = Some(mongo);
     crate::set_service(app, |s| s.mongo = ServiceState::Up);
 
+    // rebuild both prefixes now, if proton changed, so the certificate check below
+    // sees the prefix the game will actually run in
+    #[cfg(unix)]
+    {
+        launch::prepare_prefix(app, &server_prefix);
+        launch::prepare_prefix(app, &prefix_root);
+    }
+
     // 2 - certificate. generated in the server's prefix, trusted in the game's.
     let leaf = cert::ensure_cert(app, &server_prefix)
         .await

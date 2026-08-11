@@ -121,6 +121,25 @@ fn proton_exe(app: &AppHandle, info: &compat::CompatInfo) -> Option<String> {
     }
 }
 
+// build a prefix before anything reads or writes inside it. wrap_exe primes
+// lazily, which is too late for the certificate: ensure_trusted asks the prefix
+// whether the cert is already there, and a later prime that rebuilds the prefix
+// throws that answer away — the game then starts with nothing to trust and fails
+// sign-in with "Login Failed. Error code: 5", once, after every proton change.
+#[cfg(unix)]
+pub fn prepare_prefix(app: &AppHandle, prefix_root: &Path) {
+    let info = compat::detect();
+    let Some(proton) = proton_exe(app, &info) else {
+        return;
+    };
+    let Some(steam_root) = info.steam_root.clone() else {
+        return;
+    };
+    let compatdata = prefix_root.join("compatdata");
+    let _ = std::fs::create_dir_all(&compatdata);
+    prime_prefix(&proton, &steam_root, &compatdata);
+}
+
 // build the prefix ahead of the real run, and rebuild it when proton changes
 #[cfg(unix)]
 fn prime_prefix(proton: &str, steam_root: &str, compatdata: &Path) {
