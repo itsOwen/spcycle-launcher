@@ -116,4 +116,6 @@ if [ -n "${TAURI_SIGNING_PRIVATE_KEY:-}" ]; then
 fi
 
 mkdir -p out
-find "$BUNDLE" -maxdepth 1 -name '*.AppImage*' -exec cp {} out/ \;
+VERSION=$(python3 -c "import json;print(json.load(open('src-tauri/tauri.conf.json'))['version'])")
+find "$BUNDLE" -maxdepth 1 -name "*_${VERSION}_*.AppImage*" -exec cp {} out/ \;
+[ -f "out/SPCycle Launcher_${VERSION}_amd64.AppImage" ] || { echo "no appimage for $VERSION" >&2; exit 1; }

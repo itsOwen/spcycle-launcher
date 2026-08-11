@@ -37,7 +37,9 @@ cargo test --manifest-path src-tauri/Cargo.toml
 
 # out/ is shared across platforms so it is never wiped, but this platform's older
 # artifact must go or make-latest-json.sh publishes it under the new version
-find "$OUT" -maxdepth 1 \( -name "$OURS" -o -name "$OURS.sig" \) -type f -delete
+for stale in '*.AppImage' '*-setup.exe'; do
+    find "$OUT" -maxdepth 1 \( -name "$stale" -o -name "$stale.sig" \) -type f -delete
+done
 
 # both are built in docker, on ubuntu, whatever this machine is: the appimage
 # because glibc symbols are versioned and one linked against a rolling distro

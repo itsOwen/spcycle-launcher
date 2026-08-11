@@ -40,6 +40,7 @@ if [ "${SPCYCLE_IN_CONTAINER:-}" != 1 ]; then
         -v spcycle-cargo-registry:/root/.cargo/registry \
         -v spcycle-cargo-git:/root/.cargo/git \
         -v spcycle-xwin:/root/.cache/cargo-xwin \
+        -v spcycle-tauri-cache:/root/.cache/tauri \
         -e npm_config_store_dir=/src/node_modules/.pnpm-store \
         -e CARGO_TARGET_DIR=/src/src-tauri/target/container-windows \
         -e SPCYCLE_IN_CONTAINER=1 \
@@ -69,5 +70,9 @@ pnpm tauri build --runner cargo-xwin --target x86_64-pc-windows-msvc
 
 BUNDLE="${CARGO_TARGET_DIR:-src-tauri/target}/x86_64-pc-windows-msvc/release/bundle"
 mkdir -p out
-found=$(find "$BUNDLE" -name '*-setup.exe*' -exec cp {} out/ \; -print | head -1)
-[ -n "$found" ] || { echo "no installer was produced" >&2; exit 1; }
+# by version, because the bundle directory keeps every build ever made here and
+# make-latest-json.sh signs the first installer it finds — which could be an old one
+VERSION=$(python3 -c "import json;print(json.load(open('src-tauri/tauri.conf.json'))['version'])")
+find "$BUNDLE" -name "*_${VERSION}_*-setup.exe*" -exec cp {} out/ \;
+[ -f "out/SPCycle Launcher_${VERSION}_x64-setup.exe" ] || { echo "no installer for $VERSION" >&2; exit 1; }
+[ -f "out/SPCycle Launcher_${VERSION}_x64-setup.exe.sig" ] || { echo "installer for $VERSION has no .sig" >&2; exit 1; }

@@ -30,4 +30,13 @@ RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
     && rm -rf /var/lib/apt/lists/* \
     && npm install -g pnpm@11
 
+# baked in rather than fetched per build: tauri downloads this NSIS plugin at
+# bundle time, the container's cache dies with it, and a slow github then fails
+# the whole release with "failed to bundle project `timeout: global`".
+RUN mkdir -p /root/.cache/tauri/NSIS/Plugins/x86-unicode \
+    && curl -fL --retry 8 --retry-delay 3 --retry-all-errors \
+         --connect-timeout 20 --speed-limit 4096 --speed-time 20 \
+         -o /root/.cache/tauri/NSIS/Plugins/x86-unicode/nsis_tauri_utils.dll \
+         https://github.com/tauri-apps/nsis-tauri-utils/releases/download/nsis_tauri_utils-v0.5.1/nsis_tauri_utils.dll
+
 WORKDIR /src
