@@ -19,6 +19,12 @@ mkdir -p "$OUT"
 
 [ -f "$KEY" ] || { echo "no signing key at $KEY. an unsigned build is one every install rejects." >&2; exit 1; }
 
+# bundled into the app; tauri build fails late and obscurely without it
+[ -f src-tauri/resources/depot.blob ] || {
+    echo "src-tauri/resources/depot.blob is missing. run ./tools/fetch-depot-blob.sh first." >&2
+    exit 1
+}
+
 case "$(uname -s)" in
   Linux)          BUNDLE=appimage; OURS='*.AppImage' ;;
   MINGW*|MSYS*|CYGWIN*) BUNDLE=nsis; OURS='*-setup.exe' ;;

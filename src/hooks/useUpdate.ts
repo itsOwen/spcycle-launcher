@@ -17,13 +17,17 @@ export function useUpdate(): UpdateState {
   const [label, setLabel] = useState("not checked");
   const [busy, setBusy] = useState(false);
 
+  // set on every mount, not just cleared on unmount. StrictMode mounts, unmounts
+  // and remounts, so a ref only ever cleared stays false for the real mount and
+  // every later setState is dropped — the check resolves and the label sits on
+  // "checking…" forever.
   const live = useRef(true);
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    live.current = true;
+    return () => {
       live.current = false;
-    },
-    [],
-  );
+    };
+  }, []);
 
   const checkNow = useCallback(() => {
     setBusy(true);
