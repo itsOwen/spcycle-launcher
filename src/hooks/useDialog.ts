@@ -9,16 +9,12 @@ const FOCUSABLE = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(", ");
 
-// escape to leave, focus moved in on open and handed back on close, and tab kept
-// inside. without this a modal is only a div drawn on top: the page behind stays
-// reachable, and a keyboard user has to tab the whole app to reach its buttons.
-//
-// returns the ref to put on the dialog element itself, not the backdrop.
+// escape to close, focus moved in and handed back, tab trapped inside. returns the
+// ref for the dialog element itself, not the backdrop.
 export function useDialog(onDismiss: () => void) {
   const ref = useRef<HTMLDivElement>(null);
 
-  // read through a ref so a caller passing an inline closure does not re-run the
-  // effect on every render and steal focus back each time
+  // through a ref, or an inline closure re-runs the effect and steals focus back
   const dismiss = useRef(onDismiss);
   dismiss.current = onDismiss;
 

@@ -1,5 +1,4 @@
-// install state on disk, and the depot passes that change it.
-// no database of what is installed: every question is answered from the filesystem.
+// install state on disk: every question is answered from the filesystem.
 
 use std::path::Path;
 
@@ -62,8 +61,7 @@ pub fn size_on_disk(dir: &Path) -> u64 {
     walk(dir)
 }
 
-// install, update, resume and repair are all this function: the pass runs with
-// verify(true), so what is already correct on disk is skipped
+// install, update, resume and repair are all this: verify(true) skips what is correct
 async fn depot_pass(app: &AppHandle, label: &str) -> Result<(), GameError> {
     let dir = settings::game_directory(app);
 
@@ -100,22 +98,14 @@ pub async fn verify_and_repair(app: &AppHandle) -> Result<(), GameError> {
     depot_pass(app, "Verifying game files").await
 }
 
-// the upstream loader patches the running game with WriteProcessMemory, and that
-// works under wine as well as it does on windows, as long as nothing else is
-// living in the game's wine prefix. see the note in play().
-//
-// it was believed not to work at all ("Failed to write memory. Error: 5") and this
-// launcher carried a suspended-process injector of its own to work around it. that
-// injector is gone: wine was never the problem, the shared prefix was.
+// the upstream loader does the patching. it only needs the prefix to itself — see play().
 fn install_client_patch(win64: &Path) {
-    // both are leftovers of the injector era, and either one still sitting next to
-    // the game would load the agent a second time
+    // leftovers of the injector era; either one would load the agent twice
     for stale in ["dwmapi.dll", "spcycle-inject.exe"] {
         let _ = std::fs::remove_file(win64.join(stale));
     }
 
-    // the agent defaults to this address, but writing it means the port here and
-    // the port the server binds cannot drift apart
+    // written so this port and the one the server binds cannot drift apart
     let backend = format!("https://127.0.0.1:{}", settings::SERVER_HTTPS);
     if let Err(e) = std::fs::write(win64.join("backend.txt"), backend) {
         log::warn!(
@@ -128,8 +118,7 @@ fn install_client_patch(win64: &Path) {
 
 pub const LOADER_EXE: &str = "Prospect.Client.Loader.exe";
 pub const SERVER_EXE: &str = "Prospect.Server.Api.exe";
-// the loader reads this to tell steamworks which app it is. its absence is the
-// documented cause of "Login Failed. Error code: 3".
+// steamworks reads this; missing it is "Login Failed. Error code: 3"
 const STEAM_APPID_TXT: &str = "steam_appid.txt";
 
 // how long the server gets to start serving
@@ -137,8 +126,7 @@ const SERVER_READY_TIMEOUT: std::time::Duration = std::time::Duration::from_secs
 // how long the game gets to appear after the loader starts
 const GAME_APPEAR_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(120);
 
-// shuts everything down in reverse start order, however play ends.
-// deliberately no disarm(): success and rollback cannot drift apart.
+// tears down in reverse start order, however play ends. no disarm() on purpose.
 struct Teardown<'a> {
     app: &'a AppHandle,
     prefix_root: std::path::PathBuf,
@@ -166,8 +154,7 @@ impl Drop for Teardown<'_> {
         #[cfg(unix)]
         {
             launch::reset_prefix(self.app, &self.prefix_root);
-            // the server child is proton, not the server: without this its wine
-            // session outlives us and keeps 8443 bound against the next launch
+            // the child is proton, not the server: its session would keep 8443 bound
             launch::reset_prefix(self.app, &self.server_prefix);
         }
 
@@ -183,8 +170,7 @@ impl Drop for Teardown<'_> {
     }
 }
 
-// a log we cannot open is not a reason to refuse to launch, and panicking here
-// took the whole play command with it. run without one and say so.
+// a log we cannot open is no reason to refuse to launch
 fn log_file(app: &AppHandle, name: &str) -> std::process::Stdio {
     let path = settings::log_path(app, name);
     match std::fs::OpenOptions::new()
@@ -210,19 +196,8 @@ pub async fn play(app: &AppHandle) -> Result<i32, GameError> {
     // the game's prefix, rooted at the game directory. see launch.rs.
     let prefix_root = dir.clone();
 
-    // the server gets a prefix of its own, and this is not tidiness.
-    //
-    // the loader patches the game with WriteProcessMemory, which wine serves by
-    // ptrace-attaching the target from the wineserver. that only works when the
-    // process doing the patching owns the prefix's wine session — and it does not
-    // when something long-lived is already running in the same prefix. with the
-    // server sharing it the loader fails on the first write ("Failed to write
-    // memory. Error: 5"), the game runs unpatched, and sign-in fails. measured
-    // both ways.
-    //
-    // nothing is lost by splitting them: the game is the tls client and needs the
-    // certificate trusted in its prefix, while the server only reads the pfx off
-    // disk.
+    // the server needs its own prefix: wine only allows the loader's cross-process
+    // writes when it owns the prefix's session. sharing it means an unpatched game.
     let server_prefix = settings::server_prefix(app);
 
     let mut down = Teardown {
@@ -261,12 +236,7 @@ pub async fn play(app: &AppHandle) -> Result<i32, GameError> {
     down.mongo = Some(mongo);
     crate::set_service(app, |s| s.mongo = ServiceState::Up);
 
-    // 2 - certificate. generated once ever, trusted once per prefix.
-    //
-    // generated in the server's prefix: the generator only writes a pfx to disk,
-    // and running it in the game's prefix would leave a wine session there for the
-    // loader to trip over. the trust import has to be in the game's prefix, since
-    // that store is the one the game reads.
+    // 2 - certificate. generated in the server's prefix, trusted in the game's.
     let leaf = cert::ensure_cert(app, &server_prefix)
         .await
         .map_err(|e| GameError::Message(e.to_string()))?;
@@ -280,8 +250,7 @@ pub async fn play(app: &AppHandle) -> Result<i32, GameError> {
         crate::set_service(app, |s| s.steam = ServiceState::Up);
     } else {
         crate::set_service(app, |s| s.steam = ServiceState::Failed);
-        // no recovery on linux: proton's steam bridge supplies the ticket, and
-        // without it the loader fails with error code 3
+        // proton's steam bridge supplies the ticket; without it, error code 3
         #[cfg(unix)]
         return Err(GameError::Message(
             "Steam is not running. Start Steam and sign in, then try again.".into(),
@@ -308,8 +277,7 @@ pub async fn play(app: &AppHandle) -> Result<i32, GameError> {
         .map_err(|e| GameError::Message(e.to_string()))?;
     server_cmd
         .current_dir(&server_dir)
-        // net8.0 reads every appsettings key from the environment, so our private
-        // mongo port needs no file editing
+        // net8.0 reads every appsettings key from the environment
         .env("DatabaseSettings__ConnectionString", &mongo_uri)
         .env("ASPNETCORE_ENVIRONMENT", "Production")
         .stdout(log_file(app, "server.log"))
@@ -341,16 +309,12 @@ pub async fn play(app: &AppHandle) -> Result<i32, GameError> {
 
     install_client_patch(&win64);
 
-    // the trust import above ran wine in this prefix, and the loader has to own
-    // the wine session it patches through. nothing of ours is running here yet, so
-    // closing the prefix down is free — and on a first launch it is the difference
-    // between a patched game and "Failed to write memory. Error: 5".
+    // the cert import ran wine here; the loader has to own the session it patches through
     #[cfg(unix)]
     launch::reset_prefix(app, &prefix_root);
 
-    // the loader takes no arguments: it finds the game, the agent and UE4SS next to
-    // itself, and supplies the game's own command line (-log -steam_auth
-    // PF_TITLEID=...) from a format string it carries.
+    // no arguments: it finds the game and the dlls next to itself, and supplies
+    // the game's own command line (-log -steam_auth PF_TITLEID=2EA46)
     let mut loader_cmd = launch::wrap_exe(app, &loader_exe, &prefix_root)
         .map_err(|e| GameError::Message(e.to_string()))?;
     loader_cmd
@@ -377,9 +341,8 @@ pub async fn play(app: &AppHandle) -> Result<i32, GameError> {
         crate::presence::set_playing(since);
     }
 
-    // 7 - wait for it to exit. the game is the authority, not the loader, which
-    // usually exits as soon as it has injected. watching one pid rather than
-    // rescanning: a full enumeration is ~55 ms and this loop runs for the session.
+    // 7 - wait for the game, not the loader, which exits once it has patched.
+    // one pid, not a rescan: a full enumeration is ~55 ms and this loops all session.
     let mut watch = proc::Watch::new(pid);
     while watch.alive() {
         tokio::time::sleep(std::time::Duration::from_secs(2)).await;
@@ -434,8 +397,7 @@ async fn wait_for_game(dir: &Path, down: &mut Teardown<'_>) -> Result<sysinfo::P
             log::info!("the game is running as pid {pid}");
             return Ok(pid);
         }
-        // if the loader dies before the game appears, the full timeout tells
-        // the user nothing useful
+        // a dead loader means the full timeout would tell the user nothing
         if let Some(child) = down.loader.as_mut() {
             if let Ok(Some(status)) = child.try_wait() {
                 // re-check once: the loader normally exits the moment it injects

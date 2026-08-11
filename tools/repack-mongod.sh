@@ -1,19 +1,12 @@
 #!/usr/bin/env bash
-# Repack MongoDB's official archives down to just the one binary the launcher
-# runs: `mongod`. The Windows zip is 739 MiB, of which 670 MiB is debug symbols
-# for mongod and the sharding router we never start — the binary itself is
-# 27.7 MiB packed. Shipping the official archive would be a 26x download for
-# nothing.
+# repack mongodb's official archives down to just `mongod`. the windows zip is 739 MiB,
+# 670 of it debug symbols, so it is pulled over http range requests (~28 MiB); the linux
+# tarball is 94 MiB and gzip is not random-access, so that one comes whole.
 #
-# The Windows side is extracted over HTTP range requests, so this script pulls
-# ~28 MiB rather than the whole archive. The Linux tarball is only 94 MiB and
-# gzip is not random-access, so that one is fetched whole.
+# out: artifacts/mongod-{windows,linux}.zip laid out as bin/mongod[.exe], the path
+# components.rs proves against, plus manifest entries for tools/components-*.json.
 #
-# Output: artifacts/mongod-windows.zip and artifacts/mongod-linux.zip, each laid out as
-# `bin/mongod[.exe]` — the path `components.rs` proves against — plus the
-# manifest entries to paste into tools/components-*.json.
-#
-#     ./tools/repack-mongod.sh [version]      # default below
+#     ./tools/repack-mongod.sh [version]
 set -euo pipefail
 
 VERSION="${1:-8.0.4}"
@@ -30,9 +23,8 @@ LINUX_URL="https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-ubuntu2204-${VE
 need() { command -v "$1" >/dev/null || { echo "need $1" >&2; exit 1; }; }
 need curl; need python3; need tar
 
-# python rather than `zip`: it is already required here, and it is what lets us
-# stamp the unix mode. `extract` in components.rs restores that mode, so a
-# mongod archived without the executable bit would install unrunnable.
+# python rather than `zip`, to stamp the unix mode: components.rs restores it, and a
+# mongod archived without the executable bit installs unrunnable
 mkzip() { # mkzip <out.zip> <file-on-disk> <name-in-zip>
   python3 - "$@" <<'PY'
 import os, sys, zipfile

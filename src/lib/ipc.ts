@@ -1,5 +1,4 @@
-// the only file in the frontend that imports @tauri-apps/*. everything else
-// talks to the backend through these wrappers, so the surface is one file wide.
+// the only file importing @tauri-apps/*, so the surface is one file wide
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 

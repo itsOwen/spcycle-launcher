@@ -1,10 +1,5 @@
-// finding and stopping processes we own.
-//
-// ownership is proven by executable path, never by image name, so an unrelated
-// copy of the game in a steam library is never touched.
-//
-// enumerating costs ~55 ms, so the repeating callers avoid it: a running game
-// is watched by its own pid, and the idle poll caches its answer.
+// finding and stopping processes we own, by executable path and never by image
+// name. enumerating costs ~55 ms, so repeat callers watch a pid or cache instead.
 
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
@@ -36,19 +31,9 @@ fn real(path: &Path) -> PathBuf {
     std::fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf())
 }
 
-// wine reports proton's preloader as the executable of every windows process it
-// hosts, so /proc/<pid>/exe never points into the install. the .exe path is in
-// the command line instead, as a windows path.
-//
-// wine copies a child's command line verbatim from whatever the parent passed to
-// CreateProcess, so it is only sometimes absolute. the three shapes that turn up:
-//
-//   Z:\home\...\Prospect-Win64-Shipping.exe   the host filesystem
-//   C:\windows\system32\...                   inside the prefix, never ours
-//   Prospect-Win64-Shipping.exe               relative to the process's cwd
-//
-// the last one is what the loader uses to start the game, and resolving it is
-// the only reason the scan pays for cwd.
+// wine hosts every windows process under proton's preloader, so /proc/<pid>/exe is
+// useless and the real path is in the command line. three shapes turn up: Z:\... on
+// the host, C:\... inside the prefix (never ours), and a bare name relative to cwd.
 #[cfg(unix)]
 fn wine_arg_to_host(arg: &str, cwd: Option<&Path>) -> Option<PathBuf> {
     // a native process is judged by its own exe path, so only windows binaries
@@ -73,9 +58,7 @@ fn wine_arg_to_host(arg: &str, cwd: Option<&Path>) -> Option<PathBuf> {
         return Some(PathBuf::from(format!("/{rest}")));
     }
 
-    // bare or relative: only the process's working directory resolves it, and it
-    // has to actually be there, or an unrelated process sitting in the install
-    // directory could pass for the game
+    // bare or relative: only cwd resolves it, and it must actually be there
     let joined = cwd?.join(&win);
     joined.is_file().then_some(joined)
 }
@@ -362,9 +345,8 @@ mod tests {
         invalidate();
     }
 
-    // ownership is read off cmd, and a bare exe name is only resolvable via cwd.
-    // sysinfo populates neither unless asked, and forgetting one means the game is
-    // never found: the launcher then sits in "starting" until it times out.
+    // sysinfo populates neither cmd nor cwd unless asked, and without them the game
+    // is never found: the launcher sits in "starting" until it times out.
     #[test]
     fn the_scan_asks_for_the_fields_ownership_depends_on() {
         let kind = refresh_kind();
@@ -381,9 +363,7 @@ mod tests {
         assert_eq!(kind.exe(), UpdateKind::Always, "exe is the native fallback");
     }
 
-    // proton hosts every windows exe under one preloader, so ownership has to be
-    // read off the command line. this is the translation that makes teardown and
-    // "has the game appeared yet" work at all on linux.
+    // the translation that makes teardown and "has the game appeared" work on linux
     #[cfg(unix)]
     #[test]
     fn a_wine_command_line_translates_to_its_host_path() {
@@ -425,10 +405,8 @@ mod tests {
         assert!(wine_arg_to_host("Z:", None).is_none());
     }
 
-    // the loader starts the game as a sibling, by name, so the command line
-    // carries no directory at all. this is the case that made wait_for_game time
-    // out at 120 s while the game was on screen: without cwd there is nothing to
-    // resolve the name against, and exe_of falls back to proton's preloader.
+    // the loader starts the game by bare name; without cwd this timed out at 120 s
+    // while the game was on screen.
     #[cfg(unix)]
     #[test]
     fn a_bare_exe_name_resolves_against_the_process_working_directory() {
@@ -464,9 +442,8 @@ mod tests {
         std::fs::remove_dir_all(&win64).ok();
     }
 
-    // the exact failure that made the launcher report "the game did not start"
-    // while the game was plainly running: proton's preloader is not under the
-    // install, so judging by /proc/<pid>/exe finds nothing.
+    // reported "the game did not start" while it was running: the preloader is not
+    // under the install, so /proc/<pid>/exe finds nothing.
     #[cfg(unix)]
     #[test]
     fn protons_preloader_is_not_mistaken_for_the_game() {

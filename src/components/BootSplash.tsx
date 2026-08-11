@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import boot from "@/assets/boot.gif";
 
-// held for at least this long, so the sequence reads as deliberate rather than
-// as a flash on a fast machine
+// held this long so it reads as deliberate, not a flash on a fast machine
 const MIN_MS = 3400;
 const FADE_MS = 520;
 
@@ -15,10 +14,8 @@ export function BootSplash({ ready, onDone }: { ready: boolean; onDone: () => vo
     return () => clearTimeout(id);
   }, []);
 
-  // the bar is real: it waits for the first snapshot as well as the clock.
-  // `leaving` is deliberately not a dependency — setting it re-runs this effect,
-  // and the cleanup would then cancel the very timeout that unmounts us,
-  // stranding an invisible full-screen overlay over the app.
+  // `leaving` is deliberately not a dependency: it would re-run this effect and
+  // cancel the timeout that unmounts us, stranding an invisible overlay.
   useEffect(() => {
     if (!elapsed || !ready) return;
     setLeaving(true);

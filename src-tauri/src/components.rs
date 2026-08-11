@@ -1,9 +1,6 @@
-// fetching the three pieces the game needs that are not in the steam depot:
-// the local server, the client loader, and mongod.
-//
-// each is a zip named in a manifest published alongside our own releases.
-// nothing is trusted on the way in: every archive is hashed as it streams, and
-// nothing is moved into a live directory until every archive has passed.
+// the three pieces not in the steam depot: the local server, the client loader and
+// mongod. each is a zip named in our release manifest, hashed as it streams, and
+// nothing reaches a live directory until every archive has passed.
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -13,9 +10,7 @@ use tauri::AppHandle;
 
 use crate::{progress, settings, show_bar};
 
-// overridable so a candidate manifest can be tried without shipping a build.
-// one manifest per platform, because mongod is a different binary on each and a
-// single mongod key can only carry one url.
+// overridable to try a candidate manifest; one per platform, since mongod differs
 const MANIFEST_URL: &str = if cfg!(windows) {
     "https://github.com/itsOwen/spcycle-launcher/releases/latest/download/components-windows.json"
 } else {
@@ -73,9 +68,8 @@ pub struct Component {
     pub proof: &'static str,
 }
 
-// the only names the launcher will ever stage. the plan is driven by this list,
-// never by the manifest's own keys, so a manifest cannot name a component
-// ../../etc/cron.d/pwn nor add files we never asked for.
+// the only names ever staged. driven by this list, never the manifest's own keys,
+// so a manifest cannot name a component ../../etc/cron.d/pwn.
 pub const COMPONENTS: &[Component] = &[
     Component {
         name: "server",
@@ -405,9 +399,8 @@ async fn stage_all(
         fetch_one(app, c.name, entry, &archive).await?;
     }
 
-    // ...then extract, so nothing reaches a live directory until every archive
-    // has proven itself. off the runtime: this is tens of MB of synchronous
-    // inflate, and on a worker it stalls the progress pump and the state poll.
+    // ...then extract. off the runtime: tens of MB of synchronous inflate would
+    // stall the progress pump and the state poll.
     for (c, entry) in wanted {
         let archive = work.join(format!("{}.zip", c.name));
         let target = c.target.resolve(app);
@@ -608,10 +601,7 @@ mod tests {
         );
     }
 
-    // does every entry in the published manifests actually extract into the layout
-    // proof checks for? downloads the real archives; mongod comes from artifacts/,
-    // since its url only resolves once a release is published.
-    //
+    // do the published manifests extract into the layout proof checks for?
     //     RUN_LIVE=1 cargo test --lib -- --ignored --nocapture published_components
     #[test]
     #[ignore = "downloads ~65 MB; set RUN_LIVE=1"]

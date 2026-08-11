@@ -17,8 +17,7 @@ export const DEFAULTS = {
 export type Settings = typeof DEFAULTS;
 export type SettingKey = keyof Settings;
 
-// autoSave off: a value the user just changed should be on disk before the next
-// launch reads it, so every write saves explicitly
+// autoSave off: every write saves explicitly, before the next launch reads it
 const store = new LazyStore(STORE, { autoSave: false, defaults: {} });
 
 export function useSettings() {
@@ -31,8 +30,7 @@ export function useSettings() {
     for (const key of Object.keys(DEFAULTS) as SettingKey[]) {
       try {
         const value = await store.get(key);
-        // type-check against the default: a hand-edited storage.json must not put
-        // a string where the backend expects a number
+        // a hand-edited storage.json must not put a string where a number belongs
         if (value !== null && value !== undefined && typeof value === typeof DEFAULTS[key]) {
           (next[key] as unknown) = value;
         }
@@ -57,9 +55,8 @@ export function useSettings() {
         await store.save();
         setError(null);
       } catch (e) {
-        // callers do not await this, so a rejection here would otherwise be
-        // unhandled and the control would keep showing a value that was never
-        // written. mongo_port and proton_path decide how the next launch runs.
+        // callers do not await this, and an unhandled rejection would leave the
+        // control showing a value that was never written
         setError(`${key} could not be saved: ${String(e)}`);
         await refresh();
       }

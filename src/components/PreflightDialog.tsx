@@ -43,8 +43,8 @@ function Row({ check }: { check: Check }) {
   );
 }
 
-// split so the modal itself always renders: the emptiness check has to happen
-// before useDialog, and a hook cannot sit behind an early return
+// split because the emptiness check precedes useDialog, and a hook cannot sit
+// behind an early return
 export function PreflightDialog({
   report,
   onDismiss,

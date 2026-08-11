@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
-# build the updater manifest from the built artifacts.
-#
-# tauri-plugin-updater compares version against the running build and verifies
-# the download against the signature recorded here. a wrong or missing signature
-# fails silently for the user, so this errors rather than emitting half a file.
+# build the updater manifest from the built artifacts. a wrong or missing signature
+# fails silently for the user, so this errors rather than emit half a file.
 #
 #   ./tools/make-latest-json.sh v0.1.1 out
 set -euo pipefail

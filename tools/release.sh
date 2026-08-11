@@ -1,17 +1,11 @@
 #!/usr/bin/env bash
-# build a release on this machine and, optionally, publish it.
+# build a release on this machine and optionally publish it: bundle, installer, .sig,
+# mongod archives, latest.json.
 #
-# builds the bundle for whatever platform this is, collects the installer and the
-# .sig the updater checks against, rebuilds the mongod archives and checks them
-# against the manifests, then writes latest.json.
+# both manifests and both mongod archives must go on every release or component
+# installs break, so run this on each platform into the same out/ then publish once.
 #
-# the launcher reads components-<platform>.json from releases/latest/download, so
-# both manifests and both mongod archives go on every release or component
-# installs break for everyone. run this on each platform into the same out/ dir,
-# then publish once.
-#
-#     ./tools/release.sh v0.1.0            # build into out/
-#     ./tools/release.sh v0.1.0 --publish  # and create the github release
+#     ./tools/release.sh v0.1.0 [--publish]
 set -euo pipefail
 
 TAG=${1:?usage: release.sh <tag> [--publish]}
@@ -41,9 +35,8 @@ TAURI_SIGNING_PRIVATE_KEY_PASSWORD="$(cat "$ROOT/.secrets/spcycle.key.password")
   pnpm tauri build --bundles "$BUNDLE"
 
 echo "==> collecting"
-# out/ is shared across platforms on purpose, so it is never wiped — but this
-# platform's own artifact from an earlier tag has to go, or make-latest-json.sh
-# would pick the stale one up and publish it under the new version.
+# out/ is shared across platforms so it is never wiped, but this platform's older
+# artifact must go or make-latest-json.sh publishes it under the new version
 find "$OUT" -maxdepth 1 \( -name "$OURS" -o -name "$OURS.sig" \) -type f -delete
 
 found=0

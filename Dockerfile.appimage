@@ -1,9 +1,5 @@
-# builds the linux appimage on ubuntu 22.04 rather than on the host.
-#
-# two reasons. glibc symbols are versioned, so a binary linked against arch's
-# glibc refuses to start on anything older, and 22.04 is old enough to cover the
-# distros people actually run. and linuxdeploy wants a toolchain it recognises,
-# which arch is not.
+# builds the appimage on ubuntu 22.04, not the host: glibc symbols are versioned, so a
+# binary linked against arch's glibc will not start on anything older.
 #
 #     docker build -f Dockerfile.appimage -t spcycle-appimage .
 #     docker run --rm -v "$PWD/out:/out" spcycle-appimage

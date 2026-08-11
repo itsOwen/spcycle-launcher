@@ -155,10 +155,8 @@ pub fn set_service(app: &AppHandle, set: impl FnOnce(&mut Services)) {
 
 // ---- phase ----
 
-// cached: parsing 1.7 MB of protobuf on every 3-second poll would be wasteful.
-// only a successful read is cached, though: memoising the 0 from one transient
-// failure pinned depot_ok to false for the life of the process, which rejected a
-// completed download on every poll and stuck the phase at NEEDS_GAME.
+// cached, but only a successful read: memoising the 0 from one transient failure
+// pinned depot_ok false for the process and stuck the phase at NEEDS_GAME.
 fn bundled_manifest_id(app: &AppHandle) -> u64 {
     static ID: std::sync::OnceLock<u64> = std::sync::OnceLock::new();
     if let Some(id) = ID.get() {
@@ -182,9 +180,8 @@ fn current_phase(app: &AppHandle) -> Phase {
 
     let dir = settings::game_directory(app);
 
-    // the game may be running without us having started it. reporting Ready there
-    // would offer a second launch on top of the first. cached, because enumerating
-    // every process costs ~55 ms and this runs on a 3-second poll.
+    // the game may be running without us; Ready would offer a second launch.
+    // cached, because enumerating costs ~55 ms on a 3-second poll.
     if proc::observe_cached(&dir).game {
         return Phase::Playing;
     }
@@ -539,9 +536,7 @@ pub fn run() {
             let handle = app.handle().clone();
             std::fs::create_dir_all(settings::app_data(&handle)).ok();
 
-            // a launcher killed outside its own teardown can leave a mongod holding
-            // the dbpath lock, or a server holding port 8443. both sweeps are scoped
-            // to paths we own.
+            // a killed launcher leaves mongod on the dbpath lock or a server on 8443
             let swept =
                 mongo::sweep_orphans(&handle) + proc::kill_under(&settings::server_dir(&handle));
             if swept > 0 {

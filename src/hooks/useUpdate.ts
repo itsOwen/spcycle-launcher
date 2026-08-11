@@ -11,8 +11,7 @@ export interface UpdateState {
   dismiss: () => void;
 }
 
-// the updater reads latest.json from the newest github release and verifies the
-// download against the signature recorded there. tools/release.sh writes it.
+// reads latest.json from the newest release and checks its signature
 export function useUpdate(): UpdateState {
   const [available, setAvailable] = useState<Update | null>(null);
   const [label, setLabel] = useState("not checked");
@@ -61,9 +60,8 @@ export function useUpdate(): UpdateState {
 
   const dismiss = useCallback(() => setAvailable(null), []);
 
-  // one check on boot. an update nobody is told about is not an update, and the
-  // alternative was a button on a tab most people never open. a failure here
-  // stays quiet: a launcher that cannot reach github still runs the game.
+  // one check on boot, quiet on failure: a launcher that cannot reach github
+  // still runs the game
   useEffect(checkNow, [checkNow]);
 
   return { available, label, busy, checkNow, install, dismiss };

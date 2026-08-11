@@ -61,9 +61,7 @@ export default function App() {
 
   const endBoot = useCallback(() => setBooting(false), []);
 
-  // refresh fires from the poll, from every phase event and from FilesTab, so
-  // replies can land out of order. without this a slow snapshot from before a
-  // phase change resolves after it and reverts the phase.
+  // replies can land out of order, and a stale snapshot would revert the phase
   const refreshSeq = useRef(0);
 
   const refresh = useCallback(() => {
@@ -160,10 +158,8 @@ export default function App() {
     );
   }, []);
 
-  // idle poll: catches state changed outside the launcher. slowed, never
-  // stopped, while something is running: events cover that case, but if the
-  // backend stops emitting them there is nothing else left to re-read state and
-  // the launch button stays disabled with no way out.
+  // idle poll for state changed outside the launcher. slowed, never stopped: if
+  // events dry up this is the only thing left to re-enable the button.
   useEffect(() => {
     const idle = !showBar && snap.phase !== "PLAYING" && snap.phase !== "STARTING";
     const id = setInterval(refresh, idle ? IDLE_POLL_MS : BUSY_POLL_MS);
@@ -179,9 +175,7 @@ export default function App() {
         stop: ipc.stopGame,
       }[action];
       run().catch((e: unknown) => {
-        // pausing is a normal outcome, not a failure. the backend already sends
-        // its own friendly notice, and a level-2 toast never auto-dismisses, so
-        // this used to leave a permanent red error beside it.
+        // pausing is normal, and a level-2 toast never auto-dismisses
         if (String(e) === "Paused.") return;
         toast(String(e), 2);
       });

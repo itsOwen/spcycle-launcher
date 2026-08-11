@@ -1,12 +1,6 @@
-// native depot downloading, in place of shelling out to DepotDownloader.exe.
-//
-// depot.blob is a zlib stream whose first 32 bytes are the depot key and whose
-// remainder is a steam depot manifest. steam itself is touched only for the cdn
-// server list, which an anonymous logon may ask for: no account, no ownership,
-// no manifest request code. chunks are fetched unauthenticated and decrypted
-// locally with that key.
-//
-// every pass runs with verify(true), so install, repair and resume are one thing.
+// native depot downloading, in place of DepotDownloader.exe. depot.blob is a zlib
+// stream: 32-byte depot key, then a steam manifest. chunks are fetched anonymously
+// and decrypted locally. every pass runs verify(true), so install/repair/resume are one.
 
 use std::collections::HashMap;
 use std::path::Path;
@@ -189,11 +183,8 @@ async fn cdn_servers() -> Result<Vec<CdnServer>, GameError> {
     Ok(servers)
 }
 
-// translates DownloadEvents into the progress tuple the frontend consumes.
-//
-// DepotProgress only arrives after a file is fetched, so a verify pass over
-// already-good files would sit still without the FileSkipped accounting here.
-// chunk bytes cover the opposite case: a multi-gigabyte pak.
+// DownloadEvents to the frontend's progress tuple. FileSkipped keeps a verify pass
+// moving; chunk bytes cover the opposite case, one multi-gigabyte pak.
 struct Pump<'a> {
     app: &'a AppHandle,
     // shown until the job reaches its first file
@@ -368,13 +359,9 @@ pub async fn run(app: &AppHandle, dir: &Path, label: &str) -> Result<u64, GameEr
 
     let mut pump = Pump::new(app, label, &manifest);
 
-    // the blocking pool, not a worker: a verify-only pass never awaits at all, it
-    // hashes every file in one uninterrupted poll. on a worker that starves this
-    // loop, because the task a worker wakes goes to its lifo slot, which no other
-    // worker may steal, so nothing would be pumped or paused until the pass ended.
-    // block_on keeps the network awaits inside working.
-    // ponytail: abort() cannot interrupt a blocking task, so pause frees the ui
-    // but the pass in flight runs itself out.
+    // the blocking pool, not a worker: a verify-only pass never awaits, and on a
+    // worker its lifo slot starves the progress pump until the pass ends.
+    // ponytail: abort() cannot interrupt a blocking task, so a paused pass runs itself out.
     let rt = tokio::runtime::Handle::current();
     let mut download = tokio::task::spawn_blocking(move || {
         rt.block_on(job.download(&manifest, fetcher)).map(|stats| {
@@ -407,16 +394,13 @@ pub async fn run(app: &AppHandle, dir: &Path, label: &str) -> Result<u64, GameEr
         }
     };
 
-    // the chunk tasks it spawned are detached and may still be writing, so give
-    // them a moment before another pass starts over the same directory.
+    // detached chunk tasks may still be writing.
     // ponytail: fixed grace rather than a join; the crate does not expose one.
     if matches!(result, Err(GameError::Paused)) {
         tokio::time::sleep(std::time::Duration::from_millis(250)).await;
     }
 
-    // only when the pass actually failed. a pause landing in the last moments of a
-    // pass that then succeeded used to discard the success, so the marker was
-    // never written and the user was told to resume a finished 37 GiB install.
+    // only when the pass failed: a late pause used to discard a finished install
     let paused = PAUSED.swap(false, Ordering::SeqCst);
     if result.is_err() && paused {
         return Err(GameError::Paused);
@@ -424,9 +408,8 @@ pub async fn run(app: &AppHandle, dir: &Path, label: &str) -> Result<u64, GameEr
     result.map(|()| manifest_id)
 }
 
-// what the pass still has to write: the manifest total less what is on disk.
-// discounting what is present is the point, or a resume would be refused on
-// exactly the disks where the install is already nearly complete.
+// what is left to write: manifest total less what is on disk, or a nearly-complete
+// resume gets refused for space it does not need.
 fn remaining_bytes(dir: &Path, manifest: &DepotManifest) -> Option<u64> {
     let total = manifest.total_uncompressed_size?;
     let have: u64 = manifest
@@ -614,9 +597,7 @@ mod tests {
         })
     }
 
-    // settles which tls backend the game's http stack uses, which decides whether
-    // trusting the local server's certificate is possible at all.
-    //
+    // which tls backend the game uses, and so whether trusting our cert is possible.
     //     RUN_LIVE=1 cargo test --lib -- --ignored --nocapture probe_tls
     #[test]
     #[ignore = "downloads the 110 MB game executable; set RUN_LIVE=1"]
@@ -674,10 +655,8 @@ mod tests {
             }
         }
 
-        // the decisive question. ue4's ssl module uses openssl for the crypto but
-        // can seed its trust store from the windows certificate store via crypt32.
-        // if those imports are present, the current-user root store is the target,
-        // and on linux wine's crypt32 implementation of the same calls.
+        // ue4 uses openssl but can seed its trust store from crypt32; if those
+        // imports are there, CurrentUser\Root is the target (wine's crypt32 on linux)
         println!("\n  -- windows certificate store (crypt32) --");
         let mut store_api = 0;
         for needle in [
@@ -735,11 +714,7 @@ mod tests {
         // deliberately kept: see the comment on dir
     }
 
-    // the whole pipeline against the live steam cdn, using the smallest file in the
-    // manifest so it costs a few KiB instead of 15 GiB. proves the premise: an
-    // anonymous logon is enough to fetch and decrypt real chunks with a key we
-    // already hold.
-    //
+    // the whole pipeline against the live cdn, smallest file only, a few KiB.
     //     RUN_LIVE=1 cargo test -- --ignored --nocapture live_depot
     #[test]
     #[ignore = "hits the network and Steam; set RUN_LIVE=1"]
@@ -833,9 +808,8 @@ mod tests {
         );
         assert_eq!(first.files_completed, 1, "first pass must write the file");
 
-        // the point of verify(true): the second pass rewrites nothing.
-        // files_completed is the signal, not bytes_downloaded: the crate adds a
-        // skipped file's full size to that too, so it means bytes satisfied.
+        // verify(true) means the second pass rewrites nothing. files_completed is
+        // the signal: bytes_downloaded counts skipped files too.
         assert_eq!(second.files_completed, 0, "second pass must write nothing");
         assert!(
             second.files_skipped > first.files_skipped,
@@ -845,9 +819,7 @@ mod tests {
         std::fs::remove_dir_all(&dir).ok();
     }
 
-    // does the crate deliver events to a spawned job the way run wires it? uses the
-    // real install dir and one already-present file, so it downloads nothing.
-    //
+    // does the crate deliver events the way run wires them? downloads nothing.
     //     RUN_LIVE=1 GAME_DIR=/path cargo test --lib -- --ignored --nocapture live_events
     #[test]
     #[ignore = "needs a real install; set RUN_LIVE=1 and GAME_DIR"]

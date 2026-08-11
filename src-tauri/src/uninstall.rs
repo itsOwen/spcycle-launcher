@@ -1,12 +1,6 @@
-// removing what the launcher installed, and nothing else.
-//
-// the game directory is the user's choice, so it can be anything, including a
-// home directory. a marker proves we installed here; it does not prove the
-// directory is only ours. so a whole-directory delete happens only when every
-// entry is recognisably the game's or ours.
-//
-// every guard is re-checked immediately before the delete, never trusted from
-// the plan the user confirmed.
+// removing what the launcher installed and nothing else. the game directory is the
+// user's choice, so a whole-directory delete needs every entry to be ours. guards are
+// re-checked before the delete, never trusted from the plan the user confirmed.
 
 use std::path::{Path, PathBuf};
 
@@ -68,9 +62,7 @@ enum Target {
     Store,
 }
 
-// our wine/proton prefix. the name proves nothing on its own: steam keeps every
-// game's prefix under compatdata too. ours carries the stamp prime_prefix writes,
-// or holds pfx directly, which steam's never does.
+// ours carries prime_prefix's stamp, or holds pfx directly; steam's compatdata never does
 fn is_our_prefix(path: &Path) -> bool {
     path.join(".spc_proton").is_file() || path.join("pfx").is_dir()
 }
@@ -126,10 +118,8 @@ fn our_entries(dir: &Path) -> Vec<PathBuf> {
 // never follows symlinks, here or in size_of: a link into $HOME must not become
 // a route out of the install
 fn remove(path: &Path) -> std::io::Result<()> {
-    // windows holds an image locked until the last handle to a killed process
-    // closes, which is not synchronous with TerminateProcess returning. without
-    // this, uninstalling straight after game::stop intermittently fails on
-    // mongod.exe and the server exe and is reported as a failed uninstall.
+    // windows keeps an image locked past TerminateProcess, so uninstalling straight
+    // after game::stop intermittently failed on mongod.exe and the server exe
     let mut attempt = 0;
     loop {
         match remove_once(path) {
@@ -526,9 +516,8 @@ mod tests {
         assert!(our_entries(&missing).is_empty());
     }
 
-    // LOADER_FILES are deleted from Win64 by name, and Win64 is the game's own
-    // directory. a depot file with one of these names would be deleted too.
-    // ignored by default only because it reads the bundled blob.
+    // LOADER_FILES are deleted from Win64 by name, so a depot file sharing one
+    // would go too. ignored by default only because it reads the bundled blob.
     #[test]
     #[ignore = "reads resources/depot.blob; run tools/fetch-depot-blob.sh first"]
     fn no_loader_file_shares_a_name_with_a_depot_file() {

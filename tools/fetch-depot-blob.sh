@@ -1,12 +1,7 @@
 #!/usr/bin/env bash
-# fetch the depot blob. not committed: it is bundled into the app at build time,
-# so it has to exist here before `tauri build`.
-#
-# the blob is 32 bytes of aes-256 depot key followed by a zlib-compressed steam
-# depot manifest. having it means the launcher never asks steam about ownership.
-#
-# the game shut down in 2023 and its manifest is frozen, so this is a one-off.
-# set DEPOT_BLOB_URL to pull it from your own host instead of resolving one.
+# fetch the depot blob: 32 bytes of aes-256 depot key then a zlib steam manifest.
+# not committed, but must exist before `tauri build`. the manifest is frozen, so this
+# is a one-off. set DEPOT_BLOB_URL to pull it from your own host.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."

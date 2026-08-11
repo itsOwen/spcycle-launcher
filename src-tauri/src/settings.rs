@@ -58,9 +58,7 @@ pub fn server_dir(app: &AppHandle) -> PathBuf {
     components_dir(app).join("server")
 }
 
-// the local server runs in a prefix of its own, away from the game's. see the
-// comment in game::play — the loader cannot patch the game through a prefix that
-// something else is already living in.
+// the server's own prefix; the loader cannot patch through a shared one. see game::play.
 pub fn server_prefix(app: &AppHandle) -> PathBuf {
     app_data(app).join("server-prefix")
 }

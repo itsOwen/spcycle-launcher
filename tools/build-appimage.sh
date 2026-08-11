@@ -1,12 +1,8 @@
 #!/usr/bin/env bash
-# build the appimage inside ubuntu 22.04 so it runs on any distro.
+# build the appimage inside ubuntu 22.04: glibc symbols are versioned, so one built
+# on arch will not start on ubuntu or debian.
 #
-# building on the host links against the host's glibc, and glibc symbols are
-# versioned: an appimage built on arch will not start on ubuntu or debian. it
-# also keeps linuxdeploy off a distro it does not get on with.
-#
-#     ./tools/build-appimage.sh          # -> out/
-#     ./tools/build-appimage.sh --sign   # signed, for a release
+#     ./tools/build-appimage.sh [--sign]   # -> out/
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

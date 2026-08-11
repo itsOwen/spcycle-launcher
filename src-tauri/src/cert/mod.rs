@@ -1,12 +1,6 @@
-// getting the local server's tls certificate trusted by the game.
-//
-// the game's http stack is openssl, but it seeds its roots from the windows
-// certificate store, and the depot ships no cacert.pem. so the certificate goes
-// into a root store: the current user's on windows, wine's registry-backed one
-// inside the game prefix on linux.
-//
-// generate_ssl.exe writes the pkcs#12 with NoEncryption(), so the der can be
-// lifted out with a short asn.1 walk instead of a pkcs#12 library.
+// trusting the server's cert: the game is openssl but seeds its roots from the windows
+// store, so it goes into CurrentUser\Root (wine's, inside the game prefix, on linux).
+// generate_ssl.exe writes the pkcs#12 unencrypted, so an asn.1 walk lifts the der out.
 
 #[cfg(windows)]
 mod windows;
@@ -379,10 +373,8 @@ mod tests {
         }
     }
 
-    // the fixtures below build their bag from CERT_BAG_OID itself, so a malformed
-    // constant would satisfy them and still never match a real file. this checks
-    // the encoding against the definition: tag, length, then exactly that many
-    // content bytes for 1.2.840.113549.1.9.22.1.
+    // the fixtures build their bag from CERT_BAG_OID itself, so a malformed constant
+    // would satisfy them and still never match a real file. this checks the encoding.
     #[test]
     fn the_cert_bag_oid_is_a_well_formed_der_object_identifier() {
         const OID: &[u8] = &[
@@ -396,11 +388,8 @@ mod tests {
         );
     }
 
-    // parses the pfx generate_ssl.exe actually produced, which is the only thing
-    // that proves the walk works end to end.
-    //
-    //     PFX=~/.local/share/cc.spcycle.launcher/components/server/certificate.pfx \
-    //       cargo test --lib -- --ignored --nocapture real_pfx
+    // the only thing that proves the walk works end to end.
+    //     PFX=.../certificate.pfx cargo test --lib -- --ignored --nocapture real_pfx
     #[test]
     #[ignore = "needs a generated certificate.pfx; set PFX"]
     fn live_parses_a_real_pfx() {

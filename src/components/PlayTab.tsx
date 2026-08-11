@@ -2,8 +2,7 @@ import { bytes, elapsed } from "@/lib/format";
 import { useNow } from "@/hooks/useNow";
 import type { Phase, Snapshot } from "@/lib/ipc";
 
-// what pressing the button will do. keyed by phase, so the headline and the
-// button cannot disagree.
+// keyed by phase, so the headline and the button cannot disagree
 const COPY: Record<Phase, { head: string; body: string }> = {
   NEEDS_COMPONENTS: {
     head: "Not installed",

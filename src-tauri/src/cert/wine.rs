@@ -1,9 +1,6 @@
-// wine's trusted root store, backed by the prefix registry.
-//
-// each certificate is one subkey under HKCU\Software\Microsoft\SystemCertificates\Root\Certificates,
-// named with the uppercase hex sha-1 of
-// the der, holding a REG_BINARY value called Blob. wine recomputes that hash on
-// load and silently drops a certificate whose subkey name does not match.
+// wine's trusted root store, backed by the prefix registry. one subkey per cert under
+// HKCU\...\SystemCertificates\Root\Certificates, named with the uppercase hex sha-1
+// of the der. wine recomputes that hash and silently drops a cert whose name mismatches.
 
 use std::path::{Path, PathBuf};
 
@@ -83,10 +80,8 @@ pub async fn import(app: &AppHandle, leaf: &Leaf, prefix_root: &Path) -> Result<
     let blob = serialize_blob(&leaf.der);
     let script = reg_script(&leaf.hex(), &blob);
 
-    // the command is built first, and only then is the script written. building it
-    // primes the prefix, and a changed proton build rebuilds that prefix from
-    // scratch — which would delete a script written beforehand, leaving reg.exe to
-    // fail on a missing file.
+    // built before the script is written: building primes the prefix, and a proton
+    // change rebuilds it from scratch, deleting anything written beforehand
     let reg = Path::new("reg.exe");
     let mut cmd = crate::launch::wrap_exe(app, reg, prefix_root)
         .map_err(|e| CertError::StoreFailed(e.to_string()))?;

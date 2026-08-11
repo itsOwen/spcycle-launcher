@@ -1,12 +1,7 @@
 #!/usr/bin/env bash
-# type-check the #[cfg(windows)] half of the backend from linux, which a normal
-# cargo build here never compiles a line of.
-#
-# two levels: the cryptoapi module alone against the windows target (pure rust,
-# needs only a rustup target), and the whole crate when a mingw cross compiler
-# is present, because aws-lc-sys has a c build script.
-#
-# neither replaces building on a real windows machine.
+# type-check the #[cfg(windows)] half from linux, which a normal build never compiles.
+# level 1 is the cryptoapi module (rustup target only), level 2 the whole crate (needs
+# mingw, for aws-lc-sys). neither replaces building on real windows.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -23,9 +18,8 @@ WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
 mkdir -p "$WORK/src"
 
-# the dependency list is lifted out of the real manifest rather than written
-# here. hardcoding it once meant this check passed against a windows-sys the
-# crate itself did not declare, which is exactly the failure it exists to catch.
+# lifted out of the real manifest: hardcoding it once let this pass against a
+# windows-sys the crate never declared, the exact failure it exists to catch
 {
     cat <<'EOF'
 [package]
