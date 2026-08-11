@@ -39,12 +39,15 @@ cargo test --manifest-path src-tauri/Cargo.toml
 # artifact must go or make-latest-json.sh publishes it under the new version
 find "$OUT" -maxdepth 1 \( -name "$OURS" -o -name "$OURS.sig" \) -type f -delete
 
+# both are built in docker, on ubuntu, whatever this machine is: the appimage
+# because glibc symbols are versioned and one linked against a rolling distro
+# starts nowhere older, the installer because cargo-xwin plus NSIS cross-builds it
+# without windows. one machine cuts the whole release.
 if [ "$PLATFORM" = linux ]; then
-    # ubuntu 22.04 in docker, never the host. glibc symbols are versioned, so an
-    # appimage linked here starts on this machine and nowhere older — which is
-    # most of the people downloading it. lands straight in out/, signed.
     echo "==> building the appimage (ubuntu 22.04, via docker)"
     ./tools/build-appimage.sh --sign
+    echo "==> building the windows installer (cargo-xwin, via docker)"
+    ./tools/build-windows.sh --sign
 else
     echo "==> building the installer"
     TAURI_SIGNING_PRIVATE_KEY="$(cat "$KEY")" \
@@ -60,10 +63,14 @@ fi
 
 # the signature is what the updater checks; an installer without one is one every
 # client refuses, and make-latest-json.sh would rather fail than emit half a file
-built=$(find "$OUT" -maxdepth 1 -name "$OURS" -type f -print -quit)
-[ -n "$built" ] || { echo "no installer was produced for $PLATFORM" >&2; exit 1; }
-[ -f "$built.sig" ] || { echo "$built has no .sig beside it" >&2; exit 1; }
-echo "    $(basename "$built")"
+for want in '*.AppImage' '*-setup.exe'; do
+    built=$(find "$OUT" -maxdepth 1 -name "$want" -type f -print -quit)
+    [ -n "$built" ] || continue
+    [ -f "$built.sig" ] || { echo "$built has no .sig beside it" >&2; exit 1; }
+    echo "    $(basename "$built")"
+done
+find "$OUT" -maxdepth 1 \( -name '*.AppImage' -o -name '*-setup.exe' \) -type f -print -quit \
+    | grep -q . || { echo "no installer was produced" >&2; exit 1; }
 
 echo "==> component assets"
 ./tools/repack-mongod.sh

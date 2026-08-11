@@ -1,0 +1,42 @@
+# build environment for a portable appimage. deliberately no COPY of the source:
+# build-appimage.sh bind-mounts the tree at run time, so a source edit never
+# rebuilds the image and the build context stays a few KB.
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV CARGO_TERM_COLOR=always
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      build-essential curl wget file ca-certificates git pkg-config python3 \
+      libwebkit2gtk-4.1-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev \
+      libxdo-dev libasound2-dev libdbus-1-dev \
+      patchelf desktop-file-utils zsync xz-utils zstd fuse3 libfuse2 \
+      xdg-utils shared-mime-info libgtk-3-bin \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
+    && rm -rf /var/lib/apt/lists/* \
+    && npm install -g pnpm@11
+
+RUN curl -fsSL https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain stable
+ENV PATH=/root/.cargo/bin:/usr/local/bin:$PATH
+
+# baked in rather than fetched per build: tauri downloads these on first bundle,
+# and a release should not depend on github being reachable at that moment
+RUN mkdir -p /root/.cache/tauri && cd /root/.cache/tauri \
+    && for u in \
+      "https://github.com/tauri-apps/binary-releases/releases/download/apprun-old/AppRun-x86_64|AppRun-x86_64" \
+      "https://github.com/tauri-apps/binary-releases/releases/download/linuxdeploy/linuxdeploy-x86_64.AppImage|linuxdeploy-x86_64.AppImage" \
+      "https://raw.githubusercontent.com/tauri-apps/linuxdeploy-plugin-gtk/master/linuxdeploy-plugin-gtk.sh|linuxdeploy-plugin-gtk.sh" \
+      "https://github.com/linuxdeploy/linuxdeploy-plugin-appimage/releases/download/continuous/linuxdeploy-plugin-appimage-x86_64.AppImage|linuxdeploy-plugin-appimage.AppImage" \
+    ; do \
+      curl -fL --retry 5 --retry-delay 3 --retry-all-errors -o "${u#*|}" "${u%|*}" || exit 1; \
+    done \
+    && chmod +x AppRun-x86_64 linuxdeploy-x86_64.AppImage linuxdeploy-plugin-appimage.AppImage \
+       linuxdeploy-plugin-gtk.sh
+
+# appimagetool wants fuse, which a container usually cannot give it
+ENV APPIMAGE_EXTRACT_AND_RUN=1
+ENV NO_STRIP=1
+WORKDIR /src

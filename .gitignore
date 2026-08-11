@@ -21,3 +21,6 @@ src-tauri/resources/depot.blob
 
 # release.sh writes installers here
 out/
+
+# container build output (bind-mounted, not docker layer)
+src-tauri/target/

@@ -1,0 +1,29 @@
+# build environment for the windows installer, cross-compiled from linux so one
+# machine can cut a whole release. same shape as Dockerfile.appimage: environment
+# only, the source is bind-mounted at run time.
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV CARGO_TERM_COLOR=always
+
+# clang and lld are what cargo-xwin drives; nsis is the bundler
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      build-essential curl ca-certificates file git pkg-config python3 \
+      clang lld llvm nsis nsis-pluginapi xz-utils zstd \
+    && rm -rf /var/lib/apt/lists/*
+
+# tauri shells out to the bare name `makensis.exe`; ubuntu ships `makensis`.
+# same program, and NSIS scripts are platform-independent.
+RUN printf '#!/bin/sh\nexec /usr/bin/makensis "$@"\n' > /usr/local/bin/makensis.exe \
+    && chmod +x /usr/local/bin/makensis.exe
+
+RUN curl -fsSL https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain stable
+ENV PATH=/root/.cargo/bin:/usr/local/bin:$PATH
+RUN rustup target add x86_64-pc-windows-msvc && cargo install cargo-xwin --locked
+
+RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
+    && rm -rf /var/lib/apt/lists/* \
+    && npm install -g pnpm@11
+
+WORKDIR /src
