@@ -123,6 +123,12 @@ const SERVER_READY_TIMEOUT: std::time::Duration = std::time::Duration::from_secs
 // how long the game gets to appear after the loader starts
 const GAME_APPEAR_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(120);
 
+// a game still alive this long after it appeared has won the patch race: it is
+// past the movie player and into the engine, which is where a lost race kills it
+const SURVIVED: std::time::Duration = std::time::Duration::from_secs(25);
+// enough that losing the race three times running is not worth planning for
+const START_ATTEMPTS: u32 = 3;
+
 // tears down in reverse start order, however play ends. no disarm() on purpose.
 struct Teardown<'a> {
     app: &'a AppHandle,
@@ -184,6 +190,20 @@ fn log_file(app: &AppHandle, name: &str) -> std::process::Stdio {
             std::process::Stdio::null()
         }
     }
+}
+
+// watches a freshly started game for SURVIVED, and reports whether it died inside
+// that window. returns as soon as it dies, so a good start costs the full wait
+// once and a bad one is retried immediately.
+async fn died_early(pid: sysinfo::Pid, started: std::time::Instant) -> bool {
+    let mut watch = proc::Watch::new(pid);
+    while started.elapsed() < SURVIVED {
+        if !watch.alive() {
+            return true;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+    }
+    false
 }
 
 pub async fn play(app: &AppHandle) -> Result<i32, GameError> {
@@ -315,23 +335,55 @@ pub async fn play(app: &AppHandle) -> Result<i32, GameError> {
 
     // no arguments: it finds the game and the dlls next to itself, and supplies
     // the game's own command line (-log -steam_auth PF_TITLEID=2EA46)
-    let mut loader_cmd = launch::wrap_exe(app, &loader_exe, &prefix_root)
-        .map_err(|e| GameError::Message(e.to_string()))?;
-    loader_cmd
-        .current_dir(&win64)
-        .stdout(log_file(app, "loader.log"))
-        .stderr(log_file(app, "loader.log"))
-        .kill_on_drop(true);
+    // the loader resumes the game before it patches it — CreateProcessW with
+    // CREATE_SUSPENDED, ResumeThread, and only then the seven writes — so the game
+    // is already executing while its code is being rewritten. lose that race and it
+    // dies within a few seconds, every time at a different point. we cannot fix
+    // their binary, so a start that dies that fast is started again.
+    let pid = {
+        let mut attempt = 0;
+        loop {
+            attempt += 1;
+            let mut loader_cmd = launch::wrap_exe(app, &loader_exe, &prefix_root)
+                .map_err(|e| GameError::Message(e.to_string()))?;
+            loader_cmd
+                .current_dir(&win64)
+                .stdout(log_file(app, "loader.log"))
+                .stderr(log_file(app, "loader.log"))
+                .kill_on_drop(true);
 
-    let loader = loader_cmd
-        .spawn()
-        .map_err(|e| GameError::Message(format!("Could not start the client loader: {e}")))?;
-    down.loader = Some(loader);
+            let loader = loader_cmd.spawn().map_err(|e| {
+                GameError::Message(format!("Could not start the client loader: {e}"))
+            })?;
+            down.loader = Some(loader);
 
-    // 6 - wait for the game itself to appear, and keep its pid.
-    let pid = wait_for_game(&dir, &mut down).await?;
-    // the cached "is a game running" answer is now stale by construction
-    proc::invalidate();
+            // 6 - wait for the game itself to appear, and keep its pid.
+            let started = std::time::Instant::now();
+            let pid = wait_for_game(&dir, &mut down).await?;
+            // the cached "is a game running" answer is now stale by construction
+            proc::invalidate();
+
+            if !died_early(pid, started).await {
+                break pid;
+            }
+            if attempt == START_ATTEMPTS {
+                return Err(GameError::Message(format!(
+                    "The game closed itself {START_ATTEMPTS} times right after starting. The client patch has to rewrite the game while it is already running, and it lost that race every time. Launching again usually works."
+                )));
+            }
+            log::warn!(
+                "the game closed itself within {}s of starting (attempt {attempt} of                  {START_ATTEMPTS}); the patch lost its race, starting it again",
+                SURVIVED.as_secs()
+            );
+            if let Some(mut c) = down.loader.take() {
+                let _ = c.start_kill();
+            }
+            proc::kill_under(&prefix_root);
+            #[cfg(unix)]
+            launch::reset_prefix(app, &prefix_root);
+            proc::invalidate();
+        }
+    };
 
     if settings::discord_presence(app) {
         let since = std::time::SystemTime::now()
