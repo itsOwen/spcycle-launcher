@@ -25,7 +25,7 @@ export function Toasts({
         <button
           key={t.id}
           onClick={() => onDismiss(t.id)}
-          className={`pointer-events-auto border border-hair ${EDGE[t.level]} border-l-2 bg-panel-2 p-3 text-left text-ink-2 transition-colors hover:text-ink`}
+          className={`toast-in pointer-events-auto border border-hair ${EDGE[t.level]} border-l-2 bg-panel-2 p-3 text-left text-ink-2 transition-colors select-text hover:text-ink`}
         >
           {t.text}
         </button>

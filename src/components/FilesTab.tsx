@@ -17,16 +17,29 @@ export function FilesTab({
   snap,
   onUninstall,
   onChanged,
+  onError,
 }: {
   snap: Snapshot;
   onUninstall: () => void;
   onChanged: () => void;
+  onError: (message: string) => void;
 }) {
   const busy = BUSY.includes(snap.phase);
 
-  async function pick() {
-    const chosen = await ipc.pickGameDirectory();
-    if (chosen) onChanged();
+  // every one of these can be refused — claim() rejects while anything else is
+  // running, before any notification is sent — so a swallowed rejection was a
+  // button that visibly did nothing at all
+  const run = (p: Promise<unknown>) => {
+    p.catch((e: unknown) => onError(String(e)));
+  };
+
+  function pick() {
+    ipc.pickGameDirectory().then(
+      (chosen) => {
+        if (chosen) onChanged();
+      },
+      (e: unknown) => onError(String(e)),
+    );
   }
 
   return (
@@ -38,7 +51,7 @@ export function FilesTab({
             <Btn onClick={pick} disabled={busy}>
               Change…
             </Btn>
-            <Btn onClick={() => ipc.openGameFolder()}>Open</Btn>
+            <Btn onClick={() => run(ipc.openGameFolder())}>Open</Btn>
           </>
         }
       >
@@ -56,7 +69,7 @@ export function FilesTab({
           the game misbehaves.
         </p>
         <div className="flex gap-2">
-          <Btn onClick={() => ipc.verifyAndRepair()} disabled={busy}>
+          <Btn onClick={() => run(ipc.verifyAndRepair())} disabled={busy}>
             Verify &amp; repair
           </Btn>
           <Btn onClick={onUninstall} disabled={busy} tone="danger">
@@ -67,7 +80,7 @@ export function FilesTab({
 
       <Panel
         title="Components"
-        actions={<Btn onClick={() => ipc.openLauncherFolder()}>Open data folder</Btn>}
+        actions={<Btn onClick={() => run(ipc.openLauncherFolder())}>Open data folder</Btn>}
       >
         <Row label="Version" value={snap.componentsVersion ?? "not installed"} />
         <Row label="State" value={snap.install.components ? "complete" : "missing"} />
@@ -76,7 +89,7 @@ export function FilesTab({
           them and checks each against its checksum.
         </p>
         <Btn
-          onClick={() => ipc.installComponents().catch(() => {})}
+          onClick={() => run(ipc.installComponents())}
           disabled={busy}
         >
           Reinstall components

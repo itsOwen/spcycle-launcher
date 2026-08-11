@@ -1,4 +1,5 @@
 import type { Check, Preflight } from "@/lib/ipc";
+import { useDialog } from "@/hooks/useDialog";
 import { Btn } from "./kit";
 
 // copy to clipboard without the plugin: nothing else in the app needs it
@@ -42,6 +43,8 @@ function Row({ check }: { check: Check }) {
   );
 }
 
+// split so the modal itself always renders: the emptiness check has to happen
+// before useDialog, and a hook cannot sit behind an early return
 export function PreflightDialog({
   report,
   onDismiss,
@@ -51,12 +54,33 @@ export function PreflightDialog({
 }) {
   const failing = report.checks.filter((c) => !c.ok);
   if (failing.length === 0) return null;
+  return <PreflightModal report={report} onDismiss={onDismiss} failing={failing} />;
+}
+
+function PreflightModal({
+  report,
+  onDismiss,
+  failing,
+}: {
+  report: Preflight;
+  onDismiss: () => void;
+  failing: Check[];
+}) {
+  const dialog = useDialog(onDismiss);
 
   return (
     <div className="absolute inset-0 z-40 flex items-center justify-center bg-void/80 p-8">
-      <div className="flex max-h-full w-[560px] flex-col border border-hair bg-panel">
+      <div
+        ref={dialog}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="preflight-title"
+        className="flex max-h-full w-[560px] flex-col border border-hair bg-panel"
+      >
         <header className="border-b border-hair px-5 py-3">
-          <h2 className="hud text-ink">Before you play</h2>
+          <h2 id="preflight-title" className="hud text-ink">
+            Before you play
+          </h2>
           {report.distro && <p className="hud mt-1 text-ink-3">{report.distro}</p>}
         </header>
 

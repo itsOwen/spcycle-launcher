@@ -14,3 +14,10 @@ src-tauri/resources/depot.blob
 .secrets/
 *.key
 *.key.password
+
+# generated at runtime and carries a private key
+*.pfx
+*.p12
+
+# release.sh writes installers here
+out/

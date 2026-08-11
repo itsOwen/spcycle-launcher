@@ -42,6 +42,10 @@ const LOADER_FILES: &[&str] = &[
     "steam_appid.txt",
     "Mods",
     "LICENSE",
+    // ours, not the loader pack's: the client patch loader and its endpoint file
+    "spcycle-inject.exe",
+    "dwmapi.dll",
+    "backend.txt",
 ];
 
 #[derive(Debug, Clone, Serialize)]
@@ -122,6 +126,23 @@ fn our_entries(dir: &Path) -> Vec<PathBuf> {
 // never follows symlinks, here or in size_of: a link into $HOME must not become
 // a route out of the install
 fn remove(path: &Path) -> std::io::Result<()> {
+    // windows holds an image locked until the last handle to a killed process
+    // closes, which is not synchronous with TerminateProcess returning. without
+    // this, uninstalling straight after game::stop intermittently fails on
+    // mongod.exe and the server exe and is reported as a failed uninstall.
+    let mut attempt = 0;
+    loop {
+        match remove_once(path) {
+            Err(e) if e.kind() == std::io::ErrorKind::PermissionDenied && attempt < 3 => {
+                attempt += 1;
+                std::thread::sleep(std::time::Duration::from_millis(250));
+            }
+            other => return other,
+        }
+    }
+}
+
+fn remove_once(path: &Path) -> std::io::Result<()> {
     let meta = match std::fs::symlink_metadata(path) {
         Ok(m) => m,
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(()),
@@ -222,6 +243,9 @@ fn targets(app: &AppHandle) -> Vec<(Item, Target)> {
     for (label, path) in [
         ("Components", settings::components_dir(app)),
         ("MongoDB", settings::mongo_dir(app)),
+        // the server's own wine prefix. hundreds of megabytes, and nothing else
+        // would ever remove it.
+        ("Server prefix", settings::server_prefix(app)),
     ] {
         if !path.exists() {
             continue;
@@ -285,15 +309,32 @@ pub async fn execute(app: &AppHandle) -> Vec<String> {
     // nothing may hold a file open while we delete it
     game::stop(app);
 
+    // the walk that sizes the install, off the runtime
+    let handle = app.clone();
+    let plan = tokio::task::spawn_blocking(move || targets(&handle))
+        .await
+        .unwrap_or_default();
+
     let mut failed = Vec::new();
-    for (item, target) in targets(app) {
+    for (item, target) in plan {
         if !item.removable {
             continue;
         }
         let ok = match target {
-            Target::GameDir(dir) => remove_game_dir(&dir).is_ok(),
+            // deleting 37 GiB would otherwise park a worker for minutes
+            Target::GameDir(dir) => {
+                tokio::task::spawn_blocking(move || remove_game_dir(&dir).is_ok())
+                    .await
+                    .unwrap_or(false)
+            }
+            // every name is attempted: `all` short-circuits, which left the rest
+            // of the loader installed as soon as one failed
             Target::LoaderFiles(win64) => {
-                LOADER_FILES.iter().all(|n| remove(&win64.join(n)).is_ok())
+                LOADER_FILES
+                    .iter()
+                    .filter(|n| remove(&win64.join(n)).is_err())
+                    .count()
+                    == 0
             }
             Target::Owned(path) => {
                 // re-checked here, not trusted from the plan

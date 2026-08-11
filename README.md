@@ -50,6 +50,7 @@ existing installs will accept.
 | `tools/repack-mongod.sh` | build the bundled mongod archives |
 | `tools/release.sh` | build and publish a release |
 | `tools/check-windows.sh` | type-check the Windows-only code from Linux |
+| `tools/build-appimage.sh` | build the AppImage in docker |
 
 ## Credits
 

@@ -50,10 +50,43 @@ fn finish(distro: String, checks: Vec<Check>) -> Preflight {
     }
 }
 
+// disk and cpu are the launcher's problem on every platform. proton, steam and
+// the package manager are not, which is why the rest of the list is unix-only.
+fn universal_checks(app: &AppHandle) -> Vec<Check> {
+    // 40 GiB, because the depot unpacks to 36.8
+    const NEEDED: u64 = 40 * 1024 * 1024 * 1024;
+    let dir = settings::game_directory(app);
+    let free = crate::free_space(&dir).unwrap_or(0);
+
+    vec![
+        Check {
+            id: "space".into(),
+            title: "40 GiB free on the game drive".into(),
+            impact: format!(
+                "The game needs 36.8 GiB unpacked. {} is free where it would be installed.",
+                crate::depot::human(free)
+            ),
+            // 0 means the free space could not be read, which is not a failure
+            ok: free == 0 || free >= NEEDED,
+            severity: Severity::Blocking,
+            install: None,
+        },
+        // mongodb 5.0+ dies at startup without avx, with an unhelpful message
+        Check {
+            id: "avx".into(),
+            title: "A CPU with AVX".into(),
+            impact: "MongoDB 5.0 and newer require AVX and will not start without it.".into(),
+            ok: has_avx(),
+            severity: Severity::Degraded,
+            install: None,
+        },
+    ]
+}
+
 #[cfg(windows)]
-pub fn run(_app: &AppHandle) -> Preflight {
+pub fn run(app: &AppHandle) -> Preflight {
     // mongod is bundled, the cert goes to the user store, steam starts on demand
-    finish("Windows".into(), Vec::new())
+    finish("Windows".into(), universal_checks(app))
 }
 
 #[cfg(unix)]
@@ -63,7 +96,6 @@ pub fn run(app: &AppHandle) -> Preflight {
     let os = os_release();
     let family = family(&os);
     let info = compat::detect();
-    let tool = settings::compat_tool(app);
 
     let mut checks = Vec::new();
 
@@ -81,18 +113,6 @@ pub fn run(app: &AppHandle) -> Preflight {
         install: None,
     });
 
-    // plain wine is a configuration mistake, not a missing package
-    checks.push(Check {
-        id: "proton-not-wine".into(),
-        title: "Proton selected, not plain Wine".into(),
-        impact: "Plain Wine has no bridge to the Steam client, so signing in fails with \
-                 \"Login Failed. Error code: 3\". Choose Proton in Settings."
-            .into(),
-        ok: tool == "proton" || tool == "custom",
-        severity: Severity::Blocking,
-        install: None,
-    });
-
     checks.push(Check {
         id: "steam".into(),
         title: "Steam is installed".into(),
@@ -104,31 +124,7 @@ pub fn run(app: &AppHandle) -> Preflight {
         install: install_cmd(family, "steam"),
     });
 
-    // 40 GiB, because the depot unpacks to 36.8
-    const NEEDED: u64 = 40 * 1024 * 1024 * 1024;
-    let dir = settings::game_directory(app);
-    let free = crate::free_space(&dir).unwrap_or(0);
-    checks.push(Check {
-        id: "space".into(),
-        title: "40 GiB free on the game drive".into(),
-        impact: format!(
-            "The game needs 36.8 GiB unpacked. {} is free where it would be installed.",
-            crate::depot::human(free)
-        ),
-        ok: free == 0 || free >= NEEDED,
-        severity: Severity::Blocking,
-        install: None,
-    });
-
-    // mongodb 5.0+ dies at startup without avx, with an unhelpful message
-    checks.push(Check {
-        id: "avx".into(),
-        title: "A CPU with AVX".into(),
-        impact: "MongoDB 5.0 and newer require AVX and will not start without it.".into(),
-        ok: has_avx(),
-        severity: Severity::Degraded,
-        install: None,
-    });
+    checks.extend(universal_checks(app));
 
     finish(distro_name(&os), checks)
 }
@@ -201,15 +197,18 @@ fn install_cmd(family: Family, package: &str) -> Option<String> {
     })
 }
 
-#[cfg(unix)]
+// std asks the cpu directly, which works on every platform and does not depend
+// on /proc being mounted or on how a kernel formats it
 fn has_avx() -> bool {
-    let Ok(info) = std::fs::read_to_string("/proc/cpuinfo") else {
-        // unknown is not a failure to report
-        return true;
-    };
-    info.lines()
-        .filter(|l| l.starts_with("flags"))
-        .any(|l| l.split_whitespace().any(|f| f == "avx"))
+    #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+    {
+        std::arch::is_x86_feature_detected!("avx")
+    }
+    // nothing to check, and unknown is not a failure to report
+    #[cfg(not(any(target_arch = "x86", target_arch = "x86_64")))]
+    {
+        true
+    }
 }
 
 #[cfg(test)]

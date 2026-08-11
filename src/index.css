@@ -7,9 +7,9 @@
 @theme {
   /* surfaces: near-black, warm-neutral, four steps */
   --color-void: #0a0a0b;
-  --color-panel: #101013;
-  --color-panel-2: #16161a;
-  --color-panel-3: #1c1c21;
+  --color-panel: #101013e0;
+  --color-panel-2: #16161ae6;
+  --color-panel-3: #1c1c21e6;
   --color-hair: #23232a;
   --color-hair-lit: #33333d;
 
@@ -23,7 +23,10 @@
   /* type: warm white, never #fff */
   --color-ink: #e8e3d7;
   --color-ink-2: #9a948a;
-  --color-ink-3: #5c5951;
+  /* 4.5:1 on --color-panel. it carries real information at 11px — every field
+     label, the rail's service names, the progress rate and eta — so it cannot
+     sit at the decorative-text contrast it used to (#5c5951 was 2.8:1). */
+  --color-ink-3: #7d786e;
 
   /* leds: amber lit / grey unlit / one red. no green anywhere. */
   --color-led-up: #f0a021;
@@ -62,7 +65,7 @@
 
   body {
     margin: 0;
-    background: var(--color-void);
+    background: transparent;
     color: var(--color-ink);
     font-family: var(--font-mono);
     font-size: var(--text-data);
@@ -72,22 +75,28 @@
     cursor: default;
   }
 
-  /* scanline + grain. static, so reduced-motion needs no exception for it. */
+  /* the key art, held well back: atmosphere behind the instruments, never
+     competing with them. the slow drift is the only ambient motion. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: -2%;
+    z-index: -2;
+    background: url("./assets/backdrop.webp") center / cover no-repeat;
+    filter: saturate(0.72) brightness(0.5);
+    animation: backdrop-drift 48s ease-in-out infinite alternate;
+  }
+
+  /* scrim: darkest under the rail and the bottom bar, where type sits */
   body::after {
     content: "";
     position: fixed;
     inset: 0;
-    z-index: 60;
+    z-index: -1;
     pointer-events: none;
     background:
-      repeating-linear-gradient(
-        0deg,
-        rgb(255 255 255 / 2.2%) 0 1px,
-        transparent 1px 3px
-      ),
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.35'/%3E%3C/svg%3E");
-    background-blend-mode: overlay;
-    opacity: 0.5;
+      linear-gradient(100deg, var(--color-void) 0 22%, rgb(10 10 11 / 42%) 62%, rgb(10 10 11 / 66%) 100%),
+      linear-gradient(0deg, var(--color-void) 0 6%, transparent 38%);
   }
 
   /* focus ring: amber hairline, matches the hard-cornered language */
@@ -170,7 +179,120 @@
   }
 }
 
-/* the only animation in the shell: a service coming up */
+
+@keyframes backdrop-drift {
+  from {
+    transform: scale(1.04) translate3d(0, 0, 0);
+  }
+  to {
+    transform: scale(1.1) translate3d(-1.2%, -0.8%, 0);
+  }
+}
+
+/* the boot sequence: everything arrives from below, staggered by depth */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes sweep-in {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* a hairline that draws itself, used under the boot wordmark */
+@keyframes rule-draw {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes glow-breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 var(--color-amber-wash);
+  }
+  50% {
+    box-shadow: 0 0 22px -2px var(--color-amber-wash);
+  }
+}
+
+@keyframes boot-bar {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@layer components {
+  .toast-in {
+    animation: toast-in 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .boot-bar {
+    animation: boot-bar linear both;
+  }
+
+  .rise {
+    animation: rise 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .sweep-in {
+    animation: sweep-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .rule-draw {
+    transform-origin: left;
+    animation: rule-draw 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  /* the launch button, when it is the thing to press */
+  .glow-breathe {
+    animation: glow-breathe 3.2s ease-in-out infinite;
+  }
+
+  /* panels lift very slightly toward the cursor */
+  .panel-hover {
+    transition:
+      border-color 0.18s ease,
+      background-color 0.18s ease,
+      transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .panel-hover:hover {
+    transform: translateY(-1px);
+  }
+}
+
+/* a service coming up */
 @keyframes led-pulse {
   0%,
   100% {
@@ -216,6 +338,15 @@
   .led-pulse {
     animation: none !important;
     opacity: 0.6 !important;
+  }
+
+  body::before,
+  .glow-breathe {
+    animation: none !important;
+  }
+
+  .panel-hover:hover {
+    transform: none !important;
   }
 
   /* without this the bar freezes at the end of its travel, reading as stalled */

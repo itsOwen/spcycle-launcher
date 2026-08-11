@@ -56,8 +56,6 @@ export interface Snapshot {
 
 export interface CompatInfo {
   supported: boolean;
-  // whether a wine binary is on PATH at all
-  wine: boolean;
   // absolute paths to every proton launcher found
   proton: string[];
   // steam runtime app id -> entry point

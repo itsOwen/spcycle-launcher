@@ -40,10 +40,13 @@ fn bool_or(app: &AppHandle, key: &str, default: bool) -> bool {
     }
 }
 
+// degrades rather than panics: this is called from inside tauri commands, and a
+// panic there takes the command with it instead of showing the user an error
 pub fn app_data(app: &AppHandle) -> PathBuf {
-    app.path()
-        .app_data_dir()
-        .expect("the platform always has a data dir")
+    app.path().app_data_dir().unwrap_or_else(|e| {
+        log::error!("no platform data directory ({e}); falling back to the working directory");
+        PathBuf::from(".")
+    })
 }
 
 pub fn components_dir(app: &AppHandle) -> PathBuf {
@@ -53,6 +56,13 @@ pub fn components_dir(app: &AppHandle) -> PathBuf {
 // server, appsettings.json, generate_ssl.exe and the generated certificate.pfx
 pub fn server_dir(app: &AppHandle) -> PathBuf {
     components_dir(app).join("server")
+}
+
+// the local server runs in a prefix of its own, away from the game's. see the
+// comment in game::play — the loader cannot patch the game through a prefix that
+// something else is already living in.
+pub fn server_prefix(app: &AppHandle) -> PathBuf {
+    app_data(app).join("server-prefix")
 }
 
 pub fn mongo_dir(app: &AppHandle) -> PathBuf {
@@ -105,6 +115,25 @@ pub fn depot_blob(app: &AppHandle) -> PathBuf {
         .unwrap_or(in_tree)
 }
 
+// the staged resource, then the source tree so `tauri dev` works from a checkout
+#[cfg(unix)]
+fn resource(app: &AppHandle, name: &str) -> PathBuf {
+    let bundled = app
+        .path()
+        .resolve(
+            format!("patch/{name}"),
+            tauri::path::BaseDirectory::Resource,
+        )
+        .ok()
+        .filter(|p| p.is_file());
+    if let Some(p) = bundled {
+        return p;
+    }
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("resources")
+        .join(name)
+}
+
 pub fn game_directory(app: &AppHandle) -> PathBuf {
     if let Some(p) = string(app, "game_directory") {
         return PathBuf::from(p);
@@ -148,21 +177,6 @@ pub fn autorun_steam(app: &AppHandle) -> bool {
 }
 
 #[cfg(unix)]
-pub fn compat_tool(app: &AppHandle) -> String {
-    string(app, "compat_tool").unwrap_or_else(|| "proton".into())
-}
-
-#[cfg(unix)]
 pub fn proton_path(app: &AppHandle) -> Option<String> {
     string(app, "proton_path")
-}
-
-#[cfg(unix)]
-pub fn wine_path(app: &AppHandle) -> Option<String> {
-    string(app, "wine_path")
-}
-
-#[cfg(unix)]
-pub fn compat_custom_cmd(app: &AppHandle) -> Option<String> {
-    string(app, "compat_custom_cmd")
 }

@@ -7,7 +7,6 @@ use serde::Serialize;
 #[serde(rename_all = "camelCase")]
 pub struct CompatInfo {
     pub supported: bool,
-    pub wine: bool,
 
     pub proton: Vec<String>,
 
@@ -120,14 +119,6 @@ fn is_executable(p: &Path) -> bool {
         .unwrap_or(false)
 }
 
-#[cfg(unix)]
-pub fn which(bin: &str) -> Option<PathBuf> {
-    let path = std::env::var_os("PATH")?;
-    std::env::split_paths(&path)
-        .map(|d| d.join(bin))
-        .find(|p| is_executable(p))
-}
-
 #[cfg(windows)]
 pub fn detect() -> CompatInfo {
     CompatInfo {
@@ -140,7 +131,6 @@ pub fn detect() -> CompatInfo {
 pub fn detect() -> CompatInfo {
     let mut info = CompatInfo {
         supported: true,
-        wine: which("wine").is_some(),
         ..Default::default()
     };
 
@@ -310,7 +300,6 @@ mod smoke {
         let info = super::detect();
         println!("supported:  {}", info.supported);
         println!("steam root: {:?}", info.steam_root);
-        println!("wine:       {}", info.wine);
         println!("proton:     {} build(s)", info.proton.len());
         for p in &info.proton {
             println!("  {p}");

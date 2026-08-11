@@ -116,7 +116,7 @@ pub async fn start(app: &AppHandle) -> Result<Mongo, MongoError> {
 
     #[cfg(windows)]
     {
-        use std::os::windows::process::CommandExt;
+        // tokio's Command has creation_flags inherently
         const CREATE_NO_WINDOW: u32 = 0x0800_0000;
         cmd.creation_flags(CREATE_NO_WINDOW);
     }

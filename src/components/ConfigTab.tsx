@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
-import { check, type Update } from "@tauri-apps/plugin-updater";
-import { relaunch } from "@tauri-apps/plugin-process";
 import { bytes } from "@/lib/format";
 import * as ipc from "@/lib/ipc";
 import type { CompatInfo, DepotInfo } from "@/lib/ipc";
 import { useSettings } from "@/hooks/useSettings";
+import type { UpdateState } from "@/hooks/useUpdate";
 import { Btn, Panel, Row } from "./kit";
 
 // a labelled row wrapping a control, matching Row's alignment
@@ -65,108 +64,51 @@ function Toggle({
   );
 }
 
-export function ConfigTab({ version }: { version: string }) {
+export function ConfigTab({
+  version,
+  update,
+}: {
+  version: string;
+  update: UpdateState;
+}) {
   const [depot, setDepot] = useState<DepotInfo | null>(null);
   const [depotErr, setDepotErr] = useState<string | null>(null);
   const [compat, setCompat] = useState<CompatInfo | null>(null);
-  const [update, setUpdate] = useState<Update | null>(null);
-  const [updateLabel, setUpdateLabel] = useState("not checked");
-  const [updating, setUpdating] = useState(false);
-  const { settings, update: set, loaded } = useSettings();
+  const { settings, update: set, loaded, error: settingsErr } = useSettings();
 
   useEffect(() => {
     ipc.depotInfo().then(setDepot, (e) => setDepotErr(String(e)));
     ipc.detectCompatTools().then(setCompat, () => setCompat(null));
   }, []);
 
-  async function checkUpdate() {
-    setUpdating(true);
-    try {
-      if (update) {
-        setUpdateLabel("downloading…");
-        await update.downloadAndInstall();
-        // the installer takes over from here; on linux the AppImage is replaced
-        await relaunch();
-        return;
-      }
-      setUpdateLabel("checking…");
-      const found = await check();
-      if (found) {
-        setUpdate(found);
-        setUpdateLabel(`${found.version} is available`);
-      } else {
-        setUpdateLabel("up to date");
-      }
-    } catch (e) {
-      setUpdateLabel(String(e));
-    } finally {
-      setUpdating(false);
-    }
-  }
-
   return (
     <div className="space-y-4">
+      {settingsErr && <p className="text-led-fail">{settingsErr}</p>}
+
       {compat?.supported && (
         <Panel title="Compatibility">
           <Field
-            label="Run with"
-            hint="The game signs in through Steam, and only Proton bridges to it. Plain Wine fails with error code 3."
+            label="Proton build"
+            hint="The game signs in through Steam, and only Proton bridges to it."
           >
             <select
               className="field"
-              value={settings.compat_tool}
-              disabled={!loaded}
-              onChange={(e) => set("compat_tool", e.target.value as never)}
+              value={settings.proton_path}
+              disabled={!loaded || compat.proton.length === 0}
+              onChange={(e) => set("proton_path", e.target.value)}
             >
-              <option value="proton">Proton</option>
-              <option value="wine">Wine (not recommended)</option>
-              <option value="custom">A custom command</option>
+              <option value="">
+                {compat.proton.length > 0
+                  ? `Automatic (${compat.proton[0].split("/").slice(-2, -1)[0]})`
+                  : "None found"}
+              </option>
+              {compat.proton.map((p) => (
+                <option key={p} value={p}>
+                  {p.split("/").slice(-2, -1)[0]}
+                </option>
+              ))}
             </select>
           </Field>
-
-          {settings.compat_tool === "proton" && (
-            <Field label="Proton build">
-              <select
-                className="field"
-                value={settings.proton_path}
-                disabled={!loaded || compat.proton.length === 0}
-                onChange={(e) => set("proton_path", e.target.value)}
-              >
-                <option value="">
-                  {compat.proton.length > 0
-                    ? `Automatic (${compat.proton[0].split("/").slice(-2, -1)[0]})`
-                    : "None found"}
-                </option>
-                {compat.proton.map((p) => (
-                  <option key={p} value={p}>
-                    {p.split("/").slice(-2, -1)[0]}
-                  </option>
-                ))}
-              </select>
-            </Field>
-          )}
-
-          {settings.compat_tool === "custom" && (
-            <Field label="Command" hint="An executable that takes the .exe as its argument.">
-              <input
-                className="field"
-                value={settings.compat_custom_cmd}
-                onChange={(e) => set("compat_custom_cmd", e.target.value)}
-                placeholder="/usr/bin/wine"
-              />
-            </Field>
-          )}
-
-          {settings.compat_tool === "wine" && (
-            <Field label="Wine binary" hint="Leave empty to use whatever is on PATH.">
-              <input
-                className="field"
-                value={settings.wine_path}
-                onChange={(e) => set("wine_path", e.target.value)}
-                placeholder="wine"
-              />
-            </Field>
-          )}
 
           <Row label="Steam root" value={compat.steamRoot ?? "not found"} mono={false} />
           <Row label="Builds found" value={compat.proton.length} />
@@ -233,10 +175,13 @@ export function ConfigTab({ version }: { version: string }) {
 
       <Panel title="Launcher">
         <Row label="Version" value={version || "—"} />
-        <Row label="Update" value={updateLabel} mono={false} />
+        <Row label="Update" value={update.label} mono={false} />
         <div className="mt-3 flex gap-2">
-          <Btn onClick={checkUpdate} disabled={updating}>
-            {update ? "Install and restart" : "Check for updates"}
+          <Btn
+            onClick={update.available ? update.install : update.checkNow}
+            disabled={update.busy}
+          >
+            {update.available ? "Install and restart" : "Check for updates"}
           </Btn>
           <Btn onClick={() => ipc.openLauncherFolder()}>Open data folder</Btn>
         </div>

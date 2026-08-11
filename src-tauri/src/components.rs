@@ -406,13 +406,19 @@ async fn stage_all(
     }
 
     // ...then extract, so nothing reaches a live directory until every archive
-    // has proven itself
+    // has proven itself. off the runtime: this is tens of MB of synchronous
+    // inflate, and on a worker it stalls the progress pump and the state poll.
     for (c, entry) in wanted {
         let archive = work.join(format!("{}.zip", c.name));
         let target = c.target.resolve(app);
-        std::fs::create_dir_all(&target)?;
         progress(app, 0, 0, &format!("Installing {}", c.name));
-        extract(&archive, &target, entry.strip_prefix.as_deref())?;
+        let strip = entry.strip_prefix.clone();
+        tokio::task::spawn_blocking(move || {
+            std::fs::create_dir_all(&target)?;
+            extract(&archive, &target, strip.as_deref())
+        })
+        .await
+        .map_err(|e| ComponentError::Message(e.to_string()))??;
     }
     Ok(())
 }

@@ -100,6 +100,30 @@ pub async fn verify_and_repair(app: &AppHandle) -> Result<(), GameError> {
     depot_pass(app, "Verifying game files").await
 }
 
+// the upstream loader patches the running game with WriteProcessMemory, and that
+// works under wine as well as it does on windows, as long as nothing else is
+// living in the game's wine prefix. see the note in play().
+//
+// it was believed not to work at all ("Failed to write memory. Error: 5") and this
+// launcher carried a suspended-process injector of its own to work around it. that
+// injector is gone: wine was never the problem, the shared prefix was.
+fn install_client_patch(win64: &Path) {
+    // both are leftovers of the injector era, and either one still sitting next to
+    // the game would load the agent a second time
+    for stale in ["dwmapi.dll", "spcycle-inject.exe"] {
+        let _ = std::fs::remove_file(win64.join(stale));
+    }
+
+    // the agent defaults to this address, but writing it means the port here and
+    // the port the server binds cannot drift apart
+    let backend = format!("https://127.0.0.1:{}", settings::SERVER_HTTPS);
+    if let Err(e) = std::fs::write(win64.join("backend.txt"), backend) {
+        log::warn!(
+            "backend.txt could not be written ({e}); the agent falls back to its own default"
+        );
+    }
+}
+
 // ---- launching ----
 
 pub const LOADER_EXE: &str = "Prospect.Client.Loader.exe";
@@ -118,6 +142,9 @@ const GAME_APPEAR_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(
 struct Teardown<'a> {
     app: &'a AppHandle,
     prefix_root: std::path::PathBuf,
+    // only wine has a prefix to shut down, and windows would read this as dead
+    #[cfg(unix)]
+    server_prefix: std::path::PathBuf,
     loader: Option<Child>,
     server: Option<Child>,
     mongo: Option<mongo::Mongo>,
@@ -137,7 +164,12 @@ impl Drop for Teardown<'_> {
             log::info!("stopped {killed} game process(es)");
         }
         #[cfg(unix)]
-        launch::reset_prefix(self.app, &self.prefix_root);
+        {
+            launch::reset_prefix(self.app, &self.prefix_root);
+            // the server child is proton, not the server: without this its wine
+            // session outlives us and keeps 8443 bound against the next launch
+            launch::reset_prefix(self.app, &self.server_prefix);
+        }
 
         if let Some(mut m) = self.mongo.take() {
             m.stop();
@@ -151,25 +183,53 @@ impl Drop for Teardown<'_> {
     }
 }
 
-fn log_file(app: &AppHandle, name: &str) -> std::fs::File {
+// a log we cannot open is not a reason to refuse to launch, and panicking here
+// took the whole play command with it. run without one and say so.
+fn log_file(app: &AppHandle, name: &str) -> std::process::Stdio {
     let path = settings::log_path(app, name);
-    std::fs::OpenOptions::new()
+    match std::fs::OpenOptions::new()
         .create(true)
         .append(true)
         .open(&path)
-        .unwrap_or_else(|_| std::fs::File::create(&path).expect("a writable data directory"))
+    {
+        Ok(f) => f.into(),
+        Err(e) => {
+            log::warn!(
+                "{} could not be opened ({e}); {name} output is discarded",
+                path.display()
+            );
+            std::process::Stdio::null()
+        }
+    }
 }
 
 pub async fn play(app: &AppHandle) -> Result<i32, GameError> {
     let dir = settings::game_directory(app);
     let server_dir = settings::server_dir(app);
 
-    // everything shares one prefix, rooted at the game directory. see launch.rs.
+    // the game's prefix, rooted at the game directory. see launch.rs.
     let prefix_root = dir.clone();
+
+    // the server gets a prefix of its own, and this is not tidiness.
+    //
+    // the loader patches the game with WriteProcessMemory, which wine serves by
+    // ptrace-attaching the target from the wineserver. that only works when the
+    // process doing the patching owns the prefix's wine session — and it does not
+    // when something long-lived is already running in the same prefix. with the
+    // server sharing it the loader fails on the first write ("Failed to write
+    // memory. Error: 5"), the game runs unpatched, and sign-in fails. measured
+    // both ways.
+    //
+    // nothing is lost by splitting them: the game is the tls client and needs the
+    // certificate trusted in its prefix, while the server only reads the pfx off
+    // disk.
+    let server_prefix = settings::server_prefix(app);
 
     let mut down = Teardown {
         app,
         prefix_root: prefix_root.clone(),
+        #[cfg(unix)]
+        server_prefix: server_prefix.clone(),
         loader: None,
         server: None,
         mongo: None,
@@ -202,7 +262,12 @@ pub async fn play(app: &AppHandle) -> Result<i32, GameError> {
     crate::set_service(app, |s| s.mongo = ServiceState::Up);
 
     // 2 - certificate. generated once ever, trusted once per prefix.
-    let leaf = cert::ensure_cert(app, &prefix_root)
+    //
+    // generated in the server's prefix: the generator only writes a pfx to disk,
+    // and running it in the game's prefix would leave a wine session there for the
+    // loader to trip over. the trust import has to be in the game's prefix, since
+    // that store is the one the game reads.
+    let leaf = cert::ensure_cert(app, &server_prefix)
         .await
         .map_err(|e| GameError::Message(e.to_string()))?;
     cert::ensure_trusted(app, &leaf, &prefix_root)
@@ -239,7 +304,7 @@ pub async fn play(app: &AppHandle) -> Result<i32, GameError> {
         )));
     }
 
-    let mut server_cmd = launch::wrap_exe(app, &server_exe, &prefix_root, false)
+    let mut server_cmd = launch::wrap_exe(app, &server_exe, &server_prefix)
         .map_err(|e| GameError::Message(e.to_string()))?;
     server_cmd
         .current_dir(&server_dir)
@@ -274,7 +339,19 @@ pub async fn play(app: &AppHandle) -> Result<i32, GameError> {
         )));
     }
 
-    let mut loader_cmd = launch::wrap_exe(app, &loader_exe, &prefix_root, true)
+    install_client_patch(&win64);
+
+    // the trust import above ran wine in this prefix, and the loader has to own
+    // the wine session it patches through. nothing of ours is running here yet, so
+    // closing the prefix down is free — and on a first launch it is the difference
+    // between a patched game and "Failed to write memory. Error: 5".
+    #[cfg(unix)]
+    launch::reset_prefix(app, &prefix_root);
+
+    // the loader takes no arguments: it finds the game, the agent and UE4SS next to
+    // itself, and supplies the game's own command line (-log -steam_auth
+    // PF_TITLEID=...) from a format string it carries.
+    let mut loader_cmd = launch::wrap_exe(app, &loader_exe, &prefix_root)
         .map_err(|e| GameError::Message(e.to_string()))?;
     loader_cmd
         .current_dir(&win64)

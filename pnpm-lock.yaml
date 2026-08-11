@@ -14,9 +14,6 @@ importers:
       '@tauri-apps/api':
         specifier: 2.9.0
         version: 2.9.0
-      '@tauri-apps/plugin-dialog':
-        specifier: 2.4.0
-        version: 2.4.0
       '@tauri-apps/plugin-process':
         specifier: 2.3.1
         version: 2.3.1
@@ -627,9 +624,6 @@ packages:
     resolution: {integrity: sha512-Rq67+sgiiUot95kjn+6eP8gTRw9YL839gutPx5bAsGtlQ8n9S6qo2VSQkogYsiHlJs14hQpYACn/EIswH6sHzw==}
     engines: {node: '>= 10'}
     hasBin: true
-
-  '@tauri-apps/plugin-dialog@2.4.0':
-    resolution: {integrity: sha512-OvXkrEBfWwtd8tzVCEXIvRfNEX87qs2jv6SqmVPiHcJjBhSF/GUvjqUNIDmKByb5N8nvDqVUM7+g1sXwdC/S9w==}
 
   '@tauri-apps/plugin-process@2.3.1':
     resolution: {integrity: sha512-nCa4fGVaDL/B9ai03VyPOjfAHRHSBz5v6F/ObsB73r/dA3MHHhZtldaDMIc0V/pnUw9ehzr2iEG+XkSEyC0JJA==}
@@ -1362,10 +1356,6 @@ snapshots:
       '@tauri-apps/cli-win32-arm64-msvc': 2.9.0
       '@tauri-apps/cli-win32-ia32-msvc': 2.9.0
       '@tauri-apps/cli-win32-x64-msvc': 2.9.0
-
-  '@tauri-apps/plugin-dialog@2.4.0':
-    dependencies:
-      '@tauri-apps/api': 2.9.0
 
   '@tauri-apps/plugin-process@2.3.1':
     dependencies:

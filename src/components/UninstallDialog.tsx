@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { bytes } from "@/lib/format";
 import * as ipc from "@/lib/ipc";
 import type { UninstallItem } from "@/lib/ipc";
+import { useDialog } from "@/hooks/useDialog";
 import { Btn } from "./kit";
 
 export function UninstallDialog({
@@ -14,6 +15,11 @@ export function UninstallDialog({
   const [items, setItems] = useState<UninstallItem[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
+
+  // escape must not abandon a removal that is already deleting files
+  const dialog = useDialog(() => {
+    if (!running) onClose();
+  });
 
   useEffect(() => {
     ipc.uninstallPlan().then(setItems, (e) => setError(String(e)));
@@ -36,9 +42,17 @@ export function UninstallDialog({
 
   return (
     <div className="absolute inset-0 z-40 flex items-center justify-center bg-void/80 p-8">
-      <div className="flex max-h-full w-[560px] flex-col border border-hair bg-panel">
+      <div
+        ref={dialog}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="uninstall-title"
+        className="flex max-h-full w-[560px] flex-col border border-hair bg-panel"
+      >
         <header className="border-b border-hair px-5 py-3">
-          <h2 className="hud text-ink">Uninstall</h2>
+          <h2 id="uninstall-title" className="hud text-ink">
+            Uninstall
+          </h2>
         </header>
 
         <div className="min-h-0 flex-1 overflow-auto p-5">

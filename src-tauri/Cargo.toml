@@ -73,6 +73,11 @@ sysinfo = { version = "0.32", default-features = false, features = ["system", "d
 [target.'cfg(windows)'.dependencies]
 # HKCU\Software\Valve\Steam\SteamPath — three lines instead of forty of windows-sys
 winreg = "0.52"
+# the current user's Root certificate store, via cryptoapi. see cert/windows.rs
+windows-sys = { version = "0.59", features = [
+    "Win32_Foundation",
+    "Win32_Security_Cryptography",
+] }
 
 # Optimise the dependencies, not our own code: a debug-build sha1 hashes at
 # ~80 MB/s, which makes a verify pass over a full install take eight minutes in

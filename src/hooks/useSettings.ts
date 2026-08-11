@@ -7,10 +7,7 @@ const STORE = "storage.json";
 // every key the backend reads, with the default it falls back to
 export const DEFAULTS = {
   game_directory: "" as string,
-  compat_tool: "proton" as "proton" | "wine" | "custom",
   proton_path: "" as string,
-  wine_path: "" as string,
-  compat_custom_cmd: "" as string,
   autorun_steam: true as boolean,
   discord_presence: true as boolean,
   mongo_port: 0 as number,
@@ -27,6 +24,7 @@ const store = new LazyStore(STORE, { autoSave: false, defaults: {} });
 export function useSettings() {
   const [settings, setSettings] = useState<Settings>(DEFAULTS);
   const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     const next = { ...DEFAULTS };
@@ -54,11 +52,20 @@ export function useSettings() {
     async <K extends SettingKey>(key: K, value: Settings[K]) => {
       // optimistic: the control should not lag a disk write
       setSettings((prev) => ({ ...prev, [key]: value }));
-      await store.set(key, value);
-      await store.save();
+      try {
+        await store.set(key, value);
+        await store.save();
+        setError(null);
+      } catch (e) {
+        // callers do not await this, so a rejection here would otherwise be
+        // unhandled and the control would keep showing a value that was never
+        // written. mongo_port and proton_path decide how the next launch runs.
+        setError(`${key} could not be saved: ${String(e)}`);
+        await refresh();
+      }
     },
-    [],
+    [refresh],
   );
 
-  return { settings, update, refresh, loaded };
+  return { settings, update, refresh, loaded, error };
 }

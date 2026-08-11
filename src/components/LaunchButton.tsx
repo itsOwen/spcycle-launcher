@@ -48,10 +48,18 @@ export function LaunchButton({
     <button
       disabled={disabled}
       onClick={() => spec.action && onAction(spec.action)}
-      className={`group flex h-[74px] w-[300px] items-center justify-center gap-4 border transition-colors ${TONE[spec.tone]} ${disabled ? "cursor-default" : ""}`}
+      className={`group flex h-[74px] w-[300px] items-center justify-center gap-4 border transition-all duration-200 ${TONE[spec.tone]} ${
+        disabled ? "cursor-default" : "hover:-translate-y-px active:translate-y-0"
+      } ${spec.tone === "primary" ? "glow-breathe" : ""}`}
     >
       {spec.action === "play" && (
-        <svg width="16" height="18" viewBox="0 0 16 18" aria-hidden>
+        <svg
+          width="16"
+          height="18"
+          viewBox="0 0 16 18"
+          aria-hidden
+          className="transition-transform duration-200 group-hover:translate-x-0.5"
+        >
           <path d="M0 0l16 9-16 9z" fill="currentColor" />
         </svg>
       )}

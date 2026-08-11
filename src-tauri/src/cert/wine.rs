@@ -83,6 +83,14 @@ pub async fn import(app: &AppHandle, leaf: &Leaf, prefix_root: &Path) -> Result<
     let blob = serialize_blob(&leaf.der);
     let script = reg_script(&leaf.hex(), &blob);
 
+    // the command is built first, and only then is the script written. building it
+    // primes the prefix, and a changed proton build rebuilds that prefix from
+    // scratch — which would delete a script written beforehand, leaving reg.exe to
+    // fail on a missing file.
+    let reg = Path::new("reg.exe");
+    let mut cmd = crate::launch::wrap_exe(app, reg, prefix_root)
+        .map_err(|e| CertError::StoreFailed(e.to_string()))?;
+
     let temp = prefix_dir(prefix_root)
         .join("drive_c")
         .join("windows")
@@ -96,10 +104,6 @@ pub async fn import(app: &AppHandle, leaf: &Leaf, prefix_root: &Path) -> Result<
 
     // the prefix's own view of that file, deterministic, so no path translation
     let win_path = r"C:\windows\temp\spcycle-cert.reg";
-
-    let reg = Path::new("reg.exe");
-    let mut cmd = crate::launch::wrap_exe(app, reg, prefix_root, false)
-        .map_err(|e| CertError::StoreFailed(e.to_string()))?;
     cmd.arg("import").arg(win_path);
 
     let out = cmd
@@ -131,7 +135,7 @@ pub async fn remove(
     let key = format!("HKCU\\{ROOT_KEY}\\{thumbprint_hex}");
 
     let reg = Path::new("reg.exe");
-    let mut cmd = crate::launch::wrap_exe(app, reg, prefix_root, false)
+    let mut cmd = crate::launch::wrap_exe(app, reg, prefix_root)
         .map_err(|e| CertError::StoreFailed(e.to_string()))?;
     cmd.arg("delete").arg(&key).arg("/f");
 

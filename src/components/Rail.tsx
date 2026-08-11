@@ -42,20 +42,23 @@ export function Rail({
 }) {
   return (
     <nav className="flex w-[86px] shrink-0 flex-col border-r border-hair bg-panel">
-      {TABS.map((t) => {
+      {TABS.map((t, i) => {
         const active = t === tab;
         return (
           <button
             key={t}
             onClick={() => onTab(t)}
             aria-current={active ? "page" : undefined}
-            className={`hud relative py-4 text-left transition-colors ${
+            style={{ animationDelay: `${i * 60}ms` }}
+            className={`hud sweep-in relative py-4 text-left transition-colors ${
               active
                 ? "bg-amber-wash text-amber"
                 : "text-ink-3 hover:bg-panel-2 hover:text-ink-2"
             }`}
           >
-            {active && <span className="absolute inset-y-0 left-0 w-0.5 bg-amber" />}
+            {active && (
+              <span className="rule-draw absolute inset-y-0 left-0 w-0.5 origin-top bg-amber" />
+            )}
             <span className="pl-4">{t}</span>
           </button>
         );

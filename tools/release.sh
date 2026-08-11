@@ -26,8 +26,8 @@ mkdir -p "$OUT"
 [ -f "$KEY" ] || { echo "no signing key at $KEY. an unsigned build is one every install rejects." >&2; exit 1; }
 
 case "$(uname -s)" in
-  Linux)          BUNDLE=appimage ;;
-  MINGW*|MSYS*|CYGWIN*) BUNDLE=nsis ;;
+  Linux)          BUNDLE=appimage; OURS='*.AppImage' ;;
+  MINGW*|MSYS*|CYGWIN*) BUNDLE=nsis; OURS='*-setup.exe' ;;
   *) echo "unsupported platform $(uname -s)" >&2; exit 1 ;;
 esac
 
@@ -41,6 +41,11 @@ TAURI_SIGNING_PRIVATE_KEY_PASSWORD="$(cat "$ROOT/.secrets/spcycle.key.password")
   pnpm tauri build --bundles "$BUNDLE"
 
 echo "==> collecting"
+# out/ is shared across platforms on purpose, so it is never wiped — but this
+# platform's own artifact from an earlier tag has to go, or make-latest-json.sh
+# would pick the stale one up and publish it under the new version.
+find "$OUT" -maxdepth 1 \( -name "$OURS" -o -name "$OURS.sig" \) -type f -delete
+
 found=0
 for pattern in '*-setup.exe' '*.AppImage'; do
   while IFS= read -r f; do
@@ -68,12 +73,17 @@ cp tools/components-windows.json tools/components-linux.json "$OUT/"
 echo "==> updater manifest"
 ./tools/make-latest-json.sh "$TAG" "$OUT"
 
-( cd "$OUT" && sha256sum -- * > SHA256SUMS )
+# removed first: the glob would otherwise hash the previous run's SHA256SUMS
+# into the new one before the redirection truncates it
+( cd "$OUT" && rm -f SHA256SUMS && sha256sum -- * > SHA256SUMS )
 ls -la "$OUT"
 
 if [ "$PUBLISH" = "--publish" ]; then
   echo "==> publishing $TAG"
-  gh release create "$TAG" "$OUT"/* --generate-notes --clobber
+  # --clobber belongs to `upload`, not `create`. creating is separate so a second
+  # platform can publish into a release the first one already made.
+  gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --generate-notes
+  gh release upload "$TAG" "$OUT"/* --clobber
 else
   echo
   echo "built into out/. publish with:"

@@ -79,7 +79,7 @@ pub fn trusted_thumbprint(app: &AppHandle) -> Option<String> {
 fn der_from_pfx(pfx: &[u8]) -> Result<Vec<u8>, CertError> {
     // oid 1.2.840.113549.1.9.22.1, der-encoded
     const CERT_BAG_OID: &[u8] = &[
-        0x06, 0x09, 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x09, 0x16, 0x01,
+        0x06, 0x0A, 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x09, 0x16, 0x01,
     ];
 
     let at = pfx
@@ -174,7 +174,7 @@ async fn run_generator(
 ) -> Result<(), CertError> {
     use tokio::io::AsyncWriteExt;
 
-    let mut cmd = crate::launch::wrap_exe(app, generator, prefix_root, false)
+    let mut cmd = crate::launch::wrap_exe(app, generator, prefix_root)
         .map_err(|e| CertError::GenerateFailed(e.to_string()))?;
     cmd.current_dir(cwd)
         .stdin(std::process::Stdio::piped())
@@ -292,7 +292,7 @@ mod tests {
     fn fake_pfx(cert_der: &[u8]) -> Vec<u8> {
         let mut v = vec![0xAA; 40]; // leading noise, as a real file has
         v.extend_from_slice(&[
-            0x06, 0x09, 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x09, 0x16, 0x01,
+            0x06, 0x0A, 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x09, 0x16, 0x01,
         ]);
         // [0] wrapper, short form
         v.push(0xA0);
@@ -356,7 +356,7 @@ mod tests {
 
         let mut v = vec![0xAA; 8];
         v.extend_from_slice(&[
-            0x06, 0x09, 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x09, 0x16, 0x01,
+            0x06, 0x0A, 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x09, 0x16, 0x01,
         ]);
         v.push(0xA0);
         v.extend_from_slice(&[0x82, 0x01, 0x38]); // [0], long form
@@ -377,5 +377,47 @@ mod tests {
                 "{junk:?} should not pass the stamp check"
             );
         }
+    }
+
+    // the fixtures below build their bag from CERT_BAG_OID itself, so a malformed
+    // constant would satisfy them and still never match a real file. this checks
+    // the encoding against the definition: tag, length, then exactly that many
+    // content bytes for 1.2.840.113549.1.9.22.1.
+    #[test]
+    fn the_cert_bag_oid_is_a_well_formed_der_object_identifier() {
+        const OID: &[u8] = &[
+            0x06, 0x0A, 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x09, 0x16, 0x01,
+        ];
+        assert_eq!(OID[0], 0x06, "must be tagged OBJECT IDENTIFIER");
+        assert_eq!(
+            OID[1] as usize,
+            OID.len() - 2,
+            "the length byte must equal the number of content bytes that follow"
+        );
+    }
+
+    // parses the pfx generate_ssl.exe actually produced, which is the only thing
+    // that proves the walk works end to end.
+    //
+    //     PFX=~/.local/share/cc.spcycle.launcher/components/server/certificate.pfx \
+    //       cargo test --lib -- --ignored --nocapture real_pfx
+    #[test]
+    #[ignore = "needs a generated certificate.pfx; set PFX"]
+    fn live_parses_a_real_pfx() {
+        let Ok(path) = std::env::var("PFX") else {
+            eprintln!("skipping: set PFX to a certificate.pfx");
+            return;
+        };
+        let bytes = std::fs::read(&path).expect("the pfx");
+        let leaf = leaf_from_pfx(&bytes).expect("the certificate bag is found and walked");
+        let hex = leaf.hex();
+        println!("  der {} bytes, thumbprint {hex}", leaf.der.len());
+        assert!(leaf.der.starts_with(&[0x30]), "a certificate is a SEQUENCE");
+        assert_eq!(hex.len(), 40);
+        assert!(
+            hex.bytes()
+                .all(|b| b.is_ascii_hexdigit() && !b.is_ascii_lowercase()),
+            "wine keys on the uppercase hex thumbprint"
+        );
     }
 }

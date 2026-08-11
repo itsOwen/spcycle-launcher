@@ -9,7 +9,7 @@
 # ~28 MiB rather than the whole archive. The Linux tarball is only 94 MiB and
 # gzip is not random-access, so that one is fetched whole.
 #
-# Output: dist/mongod-windows.zip and dist/mongod-linux.zip, each laid out as
+# Output: artifacts/mongod-windows.zip and artifacts/mongod-linux.zip, each laid out as
 # `bin/mongod[.exe]` — the path `components.rs` proves against — plus the
 # manifest entries to paste into tools/components-*.json.
 #

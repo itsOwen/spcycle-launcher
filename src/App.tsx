@@ -13,10 +13,15 @@ import { ServerTab } from "./components/ServerTab";
 import { ConfigTab } from "./components/ConfigTab";
 import { UninstallDialog } from "./components/UninstallDialog";
 import { PreflightDialog } from "./components/PreflightDialog";
+import { BootSplash } from "./components/BootSplash";
+import { UpdateBanner } from "./components/UpdateBanner";
+import { useUpdate } from "@/hooks/useUpdate";
 
 const DOWN: Services = { mongo: "down", server: "down", steam: "down" };
 
 const IDLE_POLL_MS = 3000;
+// while events are driving the ui, a slow poll is only a safety net
+const BUSY_POLL_MS = 15000;
 
 const BOOT: Snapshot = {
   phase: "NEEDS_COMPONENTS",
@@ -47,12 +52,30 @@ export default function App() {
   const [playingSince, setPlayingSince] = useState<number | null>(null);
   const [uninstalling, setUninstalling] = useState(false);
   const [checks, setChecks] = useState<ipc.Preflight | null>(null);
+  const [booting, setBooting] = useState(true);
+  const [ready, setReady] = useState(false);
+  const update = useUpdate();
 
   // exponential smoothing: raw byte rates are far too jittery to show
   const rateRef = useRef({ at: 0, done: 0, smoothed: 0 });
 
+  const endBoot = useCallback(() => setBooting(false), []);
+
+  // refresh fires from the poll, from every phase event and from FilesTab, so
+  // replies can land out of order. without this a slow snapshot from before a
+  // phase change resolves after it and reverts the phase.
+  const refreshSeq = useRef(0);
+
   const refresh = useCallback(() => {
-    ipc.launcherState().then(setSnap, () => {});
+    const seq = ++refreshSeq.current;
+    ipc.launcherState().then(
+      (next) => {
+        if (seq === refreshSeq.current) setSnap(next);
+        setReady(true);
+      },
+      // the splash must not hang on a backend that never answers
+      () => setReady(true),
+    );
   }, []);
 
   const toast = useCallback((text: string, level: 0 | 1 | 2) => {
@@ -137,12 +160,13 @@ export default function App() {
     );
   }, []);
 
-  // idle poll: catches state changed outside the launcher. skipped while
-  // something is running, since events cover it.
+  // idle poll: catches state changed outside the launcher. slowed, never
+  // stopped, while something is running: events cover that case, but if the
+  // backend stops emitting them there is nothing else left to re-read state and
+  // the launch button stays disabled with no way out.
   useEffect(() => {
     const idle = !showBar && snap.phase !== "PLAYING" && snap.phase !== "STARTING";
-    if (!idle) return;
-    const id = setInterval(refresh, IDLE_POLL_MS);
+    const id = setInterval(refresh, idle ? IDLE_POLL_MS : BUSY_POLL_MS);
     return () => clearInterval(id);
   }, [showBar, snap.phase, refresh]);
 
@@ -154,7 +178,13 @@ export default function App() {
         play: ipc.play,
         stop: ipc.stopGame,
       }[action];
-      run().catch((e: unknown) => toast(String(e), 2));
+      run().catch((e: unknown) => {
+        // pausing is a normal outcome, not a failure. the backend already sends
+        // its own friendly notice, and a level-2 toast never auto-dismisses, so
+        // this used to leave a permanent red error beside it.
+        if (String(e) === "Paused.") return;
+        toast(String(e), 2);
+      });
     },
     [toast],
   );
@@ -167,27 +197,35 @@ export default function App() {
         : undefined;
 
   return (
-    <div className="flex h-full flex-col bg-void">
+    <div className="flex h-full flex-col">
+      {booting && <BootSplash ready={ready} onDone={endBoot} />}
+
       <Titlebar version={snap.launcherVersion} />
 
       <div className="flex min-h-0 flex-1">
         <Rail tab={tab} onTab={setTab} services={snap.services} />
 
         <main className="relative flex min-w-0 flex-1 flex-col p-6">
-          <div className="min-h-0 flex-1 overflow-auto">
+          {!booting && <UpdateBanner update={update} />}
+
+          {/* keyed on the tab, so switching replays the entrance */}
+          <div key={tab} className="rise min-h-0 flex-1 overflow-auto">
             {tab === "play" && <PlayTab snap={snap} since={playingSince} />}
             {tab === "files" && (
               <FilesTab
                 snap={snap}
                 onUninstall={() => setUninstalling(true)}
                 onChanged={refresh}
+                onError={(m) => toast(m, 2)}
               />
             )}
             {tab === "server" && <ServerTab services={snap.services} />}
-            {tab === "config" && <ConfigTab version={snap.launcherVersion} />}
+            {tab === "config" && (
+              <ConfigTab version={snap.launcherVersion} update={update} />
+            )}
           </div>
 
-          <div className="mt-6 flex shrink-0 items-end gap-6">
+          <div className="rise mt-6 flex shrink-0 items-end gap-6" style={{ animationDelay: "120ms" }}>
             <div className="min-w-0 flex-1">
               {showBar && (
                 <ProgressBar
@@ -212,7 +250,7 @@ export default function App() {
             />
           )}
 
-          {checks && (
+          {checks && !booting && (
             <PreflightDialog report={checks} onDismiss={() => setChecks(null)} />
           )}
         </main>

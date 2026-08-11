@@ -414,7 +414,11 @@ pub async fn run(app: &AppHandle, dir: &Path, label: &str) -> Result<u64, GameEr
         tokio::time::sleep(std::time::Duration::from_millis(250)).await;
     }
 
-    if PAUSED.swap(false, Ordering::SeqCst) {
+    // only when the pass actually failed. a pause landing in the last moments of a
+    // pass that then succeeded used to discard the success, so the marker was
+    // never written and the user was told to resume a finished 37 GiB install.
+    let paused = PAUSED.swap(false, Ordering::SeqCst);
+    if result.is_err() && paused {
         return Err(GameError::Paused);
     }
     result.map(|()| manifest_id)

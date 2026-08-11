@@ -133,6 +133,7 @@ pub fn show_pause(app: &AppHandle, pausable: bool) {
 }
 
 pub const NOTIFY_INFO: u8 = 0;
+pub const NOTIFY_ERROR: u8 = 2;
 
 // level: 0 info, 1 success, 2 error
 pub fn notify(app: &AppHandle, text: &str, level: u8) {
@@ -154,15 +155,22 @@ pub fn set_service(app: &AppHandle, set: impl FnOnce(&mut Services)) {
 
 // ---- phase ----
 
-// cached: parsing 1.7 MB of protobuf on every 3-second poll would be wasteful
+// cached: parsing 1.7 MB of protobuf on every 3-second poll would be wasteful.
+// only a successful read is cached, though: memoising the 0 from one transient
+// failure pinned depot_ok to false for the life of the process, which rejected a
+// completed download on every poll and stuck the phase at NEEDS_GAME.
 fn bundled_manifest_id(app: &AppHandle) -> u64 {
     static ID: std::sync::OnceLock<u64> = std::sync::OnceLock::new();
-    *ID.get_or_init(|| {
-        depot::describe(app)
-            .ok()
-            .and_then(|d| d.manifest_id.parse().ok())
-            .unwrap_or(0)
-    })
+    if let Some(id) = ID.get() {
+        return *id;
+    }
+    let read = depot::describe(app)
+        .ok()
+        .and_then(|d| d.manifest_id.parse().ok());
+    match read {
+        Some(id) => *ID.get_or_init(|| id),
+        None => 0,
+    }
 }
 
 // derived from disk on every call, never stored, so a stale marker cannot wedge
@@ -323,16 +331,19 @@ async fn depot_info(app: AppHandle) -> CmdResult<depot::DepotInfo> {
     Ok(depot::describe(&app)?)
 }
 
+// walks every steam library and canonicalises each hit, so it runs off the pool
 #[cfg(unix)]
 #[tauri::command]
 async fn detect_compat_tools() -> compat::CompatInfo {
-    compat::detect()
+    tokio::task::spawn_blocking(compat::detect)
+        .await
+        .unwrap_or_default()
 }
 
 #[cfg(windows)]
 #[tauri::command]
 async fn detect_compat_tools() -> serde_json::Value {
-    serde_json::json!({ "supported": false, "wine": false, "proton": [], "runtimes": {}, "steamRoot": null })
+    serde_json::json!({ "supported": false, "proton": [], "runtimes": {}, "steamRoot": null })
 }
 
 #[tauri::command]

@@ -12,7 +12,7 @@ export function Panel({
   actions?: ReactNode;
 }) {
   return (
-    <section className="border border-hair bg-panel">
+    <section className="panel-hover border border-hair bg-panel">
       <header className="flex items-center gap-3 border-b border-hair px-4 py-2.5">
         <span className="hud text-ink-2">{title}</span>
         {actions && <div className="ml-auto flex gap-2">{actions}</div>}

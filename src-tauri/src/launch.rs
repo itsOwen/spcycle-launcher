@@ -23,40 +23,35 @@ pub const COMPAT_APP_ID: &str = "480";
 #[cfg(unix)]
 const GAME_SETTINGS_DIR: &str = "pfx/drive_c/users/steamuser/AppData/Local/Prospect";
 
+// nothing constructs these on windows: there is no proton to find, and wrap_exe's
+// windows branch cannot fail
+#[cfg_attr(windows, allow(dead_code))]
 #[derive(Debug, thiserror::Error)]
 pub enum LaunchError {
-    #[error("Wine was not found. Install it, or choose a Proton build in Settings.")]
-    NoWine,
     #[error("No Proton build was found. Install one through Steam.")]
     NoProton,
-    #[error("The custom compatibility command in Settings does not point at a file.")]
-    NoCustom,
     #[error("{0}")]
     Message(String),
 }
 
-// prefix_root is the directory whose compatdata holds the wine prefix. every
-// caller must pass the same root, or certificate trust breaks. is_game selects
-// proton's blocking verb and suppresses its console window.
-pub fn wrap_exe(
-    app: &AppHandle,
-    exe: &Path,
-    prefix_root: &Path,
-    is_game: bool,
-) -> Result<Command, LaunchError> {
+// prefix_root is the directory whose compatdata holds the wine prefix. the game
+// and the certificate trust must pass the same root, or the game does not trust
+// the server; the server passes its own. see game::play.
+pub fn wrap_exe(app: &AppHandle, exe: &Path, prefix_root: &Path) -> Result<Command, LaunchError> {
     #[cfg(windows)]
     {
-        let _ = (prefix_root, is_game, app);
+        let _ = (prefix_root, app);
         let mut cmd = Command::new(exe);
         cmd.current_dir(working_dir(exe, prefix_root));
-        use std::os::windows::process::CommandExt;
+        // tokio's Command has creation_flags inherently; the CommandExt trait
+        // std::process::Command needs is not in play here
         const CREATE_NO_WINDOW: u32 = 0x0800_0000;
         cmd.creation_flags(CREATE_NO_WINDOW);
         Ok(cmd)
     }
     #[cfg(unix)]
     {
-        wrap_unix(app, exe, prefix_root, is_game)
+        wrap_unix(app, exe, prefix_root)
     }
 }
 
@@ -70,93 +65,76 @@ fn working_dir<'a>(exe: &'a Path, prefix_root: &'a Path) -> &'a Path {
 }
 
 #[cfg(unix)]
-fn wrap_unix(
-    app: &AppHandle,
-    exe: &Path,
-    prefix_root: &Path,
-    is_game: bool,
-) -> Result<Command, LaunchError> {
-    // waitforexitandrun settles the prefix first, which is what the game needs
-    let verb = if is_game {
-        "waitforexitandrun"
-    } else {
-        "runinprefix"
-    };
+fn wrap_unix(app: &AppHandle, exe: &Path, prefix_root: &Path) -> Result<Command, LaunchError> {
+    // always runinprefix, for the game as much as anything else.
+    //
+    // never waitforexitandrun: it runs `wineserver -w` first, which blocks until
+    // every wine process in the prefix has exited, and we deliberately keep the
+    // server running in this same prefix for the whole session. the game would
+    // wait for a server that never exits.
+    //
+    // not `run` either, though it is tempting: it is the verb steam itself uses,
+    // and unlike runinprefix it calls setup_prefix(). but it launches the target
+    // through c:\windows\system32\steam.exe, and under that shim the game loads,
+    // lets ue4ss hook, then exits after ~12 s without ever bringing up the engine
+    // — no Prospect.log is written at all. measured, not theorised.
+    //
+    // the steam bridge buys us nothing anyway: the client patch points the game at
+    // the local server, so no steam ticket is ever requested. prime_prefix uses
+    // `run` for the setup_prefix() half, which is the only part we actually want.
+    //
+    // runinprefix was once blamed for the loader failing to patch the game
+    // ("Failed to write memory. Error: 5") and it was never the cause. that write
+    // fails when something else is already living in the game's prefix, whatever
+    // verb is in play, which is why the server now gets a prefix of its own. under
+    // runinprefix with the prefix to itself the loader patches every site — and
+    // under `run` the game dies regardless. measured, both ways.
+    let verb = "runinprefix";
     let info = compat::detect();
     let compatdata = prefix_root.join("compatdata");
     let _ = std::fs::create_dir_all(&compatdata);
 
-    let mut cmd = match settings::compat_tool(app).as_str() {
-        "proton" => {
-            let proton = proton_exe(app, &info).ok_or(LaunchError::NoProton)?;
-            let steam_root = info
-                .steam_root
-                .clone()
-                .ok_or_else(|| LaunchError::Message("Steam was not found.".into()))?;
+    let mut cmd = {
+        let proton = proton_exe(app, &info).ok_or(LaunchError::NoProton)?;
+        let steam_root = info
+            .steam_root
+            .clone()
+            .ok_or_else(|| LaunchError::Message("Steam was not found.".into()))?;
 
-            prime_prefix(&proton, &steam_root, &compatdata, exe);
+        prime_prefix(&proton, &steam_root, &compatdata);
 
-            let mut c = match compat::runtime_for(&proton, &info) {
-                Some(run) => {
-                    log::info!("running through the runtime this proton build asks for: {run}");
-                    let mut c = Command::new(run);
-                    c.arg("--").arg(&proton);
-                    // the container must be able to write the install and prefix
-                    let dir = prefix_root.display().to_string();
-                    let existing =
-                        std::env::var("PRESSURE_VESSEL_FILESYSTEMS_RW").unwrap_or_default();
-                    c.env(
-                        "PRESSURE_VESSEL_FILESYSTEMS_RW",
-                        if existing.is_empty() {
-                            dir
-                        } else {
-                            format!("{existing}:{dir}")
-                        },
-                    );
-                    c
-                }
-                None => Command::new(&proton),
-            };
-            c.arg(verb).arg(exe);
-            if is_game {
-                // stops wine opening a console window behind the game
-                let existing = std::env::var("WINEDLLOVERRIDES").unwrap_or_default();
+        let mut c = match compat::runtime_for(&proton, &info) {
+            Some(run) => {
+                log::info!("running through the runtime this proton build asks for: {run}");
+                let mut c = Command::new(run);
+                c.arg("--").arg(&proton);
+                // the container must be able to write the install and prefix
+                let dir = prefix_root.display().to_string();
+                let existing = std::env::var("PRESSURE_VESSEL_FILESYSTEMS_RW").unwrap_or_default();
                 c.env(
-                    "WINEDLLOVERRIDES",
+                    "PRESSURE_VESSEL_FILESYSTEMS_RW",
                     if existing.is_empty() {
-                        "conhost.exe=d".to_string()
+                        dir
                     } else {
-                        format!("{existing};conhost.exe=d")
+                        format!("{existing}:{dir}")
                     },
                 );
+                c
             }
-            c.env("STEAM_COMPAT_CLIENT_INSTALL_PATH", &steam_root)
-                .env("STEAM_COMPAT_DATA_PATH", &compatdata)
-                .env("STEAM_COMPAT_APP_ID", COMPAT_APP_ID)
-                .env("SteamAppId", COMPAT_APP_ID)
-                .env("SteamGameId", COMPAT_APP_ID);
-            c
-        }
-        "custom" => {
-            let raw = settings::compat_custom_cmd(app).ok_or(LaunchError::NoCustom)?;
-            if !Path::new(&raw).is_file() {
-                return Err(LaunchError::NoCustom);
-            }
-            let mut c = Command::new(&raw);
-            c.arg(exe).env("WINEPREFIX", compatdata.join("pfx"));
-            c
-        }
-        _ => {
-            let wine = settings::wine_path(app).unwrap_or_else(|| "wine".into());
-            if wine == "wine" && !info.wine {
-                return Err(LaunchError::NoWine);
-            }
-            let mut c = Command::new(&wine);
-            c.arg(exe)
-                .env("WINEPREFIX", compatdata.join("pfx"))
-                .env("WINEDEBUG", "-all");
-            c
-        }
+            None => Command::new(&proton),
+        };
+        c.arg(verb).arg(exe);
+        // conhost is deliberately left alone. disabling it (`conhost.exe=d`) hides
+        // the console window that appears behind the game, but the loader starts
+        // the game with -log, and a game that asks for a console it cannot get
+        // dies during startup without writing so much as a Prospect.log. measured
+        // both ways: the window is the price of the game starting at all.
+        c.env("STEAM_COMPAT_CLIENT_INSTALL_PATH", &steam_root)
+            .env("STEAM_COMPAT_DATA_PATH", &compatdata)
+            .env("STEAM_COMPAT_APP_ID", COMPAT_APP_ID)
+            .env("SteamAppId", COMPAT_APP_ID)
+            .env("SteamGameId", COMPAT_APP_ID);
+        c
     };
 
     scrub_appimage_env(&mut cmd);
@@ -176,18 +154,26 @@ fn proton_exe(app: &AppHandle, info: &compat::CompatInfo) -> Option<String> {
 
 // build the prefix ahead of the real run, and rebuild it when proton changes
 #[cfg(unix)]
-fn prime_prefix(proton: &str, steam_root: &str, compatdata: &Path, exe: &Path) {
+fn prime_prefix(proton: &str, steam_root: &str, compatdata: &Path) {
     let stamp_path = compatdata.join(".spc_proton");
+    // canonicalised. ~/.steam/steam and ~/.local/share/Steam are one directory
+    // reached by two names, and comparing the raw strings made the same proton
+    // build read as a different one. the answer to a different build is to delete
+    // the prefix, so this compared paths into a loop that wiped compatdata on
+    // every launch and never rebuilt it.
+    let id = std::fs::canonicalize(proton)
+        .map(|p| p.display().to_string())
+        .unwrap_or_else(|_| proton.to_string());
     let stamp = std::fs::metadata(proton)
         .and_then(|m| m.modified())
-        .map(|t| format!("{proton}\n{t:?}"))
-        .unwrap_or_else(|_| proton.to_string());
+        .map(|t| format!("{id}\n{t:?}"))
+        .unwrap_or_else(|_| id.clone());
     let previous = std::fs::read_to_string(&stamp_path).unwrap_or_default();
     if previous == stamp {
         return;
     }
 
-    let same_build = previous.lines().next().is_some_and(|p| p == proton);
+    let same_build = previous.lines().next().is_some_and(|p| p == id);
     let mut stash = None;
     if !previous.is_empty() && !same_build {
         log::info!("compatibility tool changed build, rebuilding the wine prefix");
@@ -201,9 +187,25 @@ fn prime_prefix(proton: &str, steam_root: &str, compatdata: &Path, exe: &Path) {
         let _ = std::fs::create_dir_all(compatdata);
     }
 
+    // `cmd /c exit`, never the exe we are about to launch. proton builds the
+    // prefix before running whatever it is given, so anything trivial primes it —
+    // and priming with the real exe starts a second copy of it. with the server
+    // that copy runs from the launcher's own directory, finds no appsettings.json,
+    // binds kestrel's default port, and never exits, which then deadlocks every
+    // later `waitforexitandrun` in this prefix.
+    //
+    // `run`, not `runinprefix`. proton dispatches
+    // `init_session(sys.argv[1] != "runinprefix")`, so only `run` reaches
+    // setup_prefix(), and that is the only thing that can *create* a prefix.
+    // priming with runinprefix after a wipe leaves it wiped: "the wine prefix was
+    // not built" on every launch, and the next launch wipes it again.
+    //
+    // priming only. the game itself is still launched with runinprefix.
     let mut cmd = std::process::Command::new(proton);
-    cmd.arg("waitforexitandrun")
-        .arg(exe)
+    cmd.arg("run")
+        .arg("cmd")
+        .arg("/c")
+        .arg("exit")
         .env("STEAM_COMPAT_CLIENT_INSTALL_PATH", steam_root)
         .env("STEAM_COMPAT_DATA_PATH", compatdata)
         .env("STEAM_COMPAT_APP_ID", COMPAT_APP_ID)
@@ -218,7 +220,10 @@ fn prime_prefix(proton: &str, steam_root: &str, compatdata: &Path, exe: &Path) {
     log::info!("preparing the wine prefix");
     let _ = cmd.status();
 
-    let built = compatdata.join("pfx").join("system.reg").is_file();
+    // tracked_files, not system.reg: plain wine bootstraps a prefix on first use,
+    // so system.reg appears whether or not proton ever set one up. only
+    // setup_prefix() writes tracked_files, and priming uses `run`, so it does.
+    let built = compatdata.join("tracked_files").is_file();
     if built {
         let _ = std::fs::write(&stamp_path, stamp);
     } else {
@@ -247,10 +252,12 @@ pub fn reset_prefix(app: &AppHandle, prefix_root: &Path) {
     if !prefix.join("system.reg").is_file() {
         return;
     }
-    // wineserver sits next to the wine binary
-    let server = settings::wine_path(app)
+    // proton ships its own wineserver; the one on PATH, if any, belongs to a
+    // different wine build and would not know this prefix
+    let info = compat::detect();
+    let server = proton_exe(app, &info)
         .map(PathBuf::from)
-        .and_then(|w| w.parent().map(|p| p.join("wineserver")))
+        .and_then(|p| p.parent().map(|d| d.join("files/bin/wineserver")))
         .filter(|p| p.is_file())
         .unwrap_or_else(|| PathBuf::from("wineserver"));
 
