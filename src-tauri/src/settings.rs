@@ -68,6 +68,17 @@ pub fn app_data(app: &AppHandle) -> PathBuf {
     })
 }
 
+// the log plugin's LogDir target writes to app_log_dir, not app_data, and names the
+// file after this stem. shared so the writer and the ui's reader cannot drift apart.
+pub const LAUNCHER_LOG_STEM: &str = "launcher";
+
+pub fn launcher_log(app: &AppHandle) -> PathBuf {
+    app.path()
+        .app_log_dir()
+        .unwrap_or_else(|_| app_data(app))
+        .join(format!("{LAUNCHER_LOG_STEM}.log"))
+}
+
 pub fn components_dir(app: &AppHandle) -> PathBuf {
     app_data(app).join("components")
 }

@@ -277,7 +277,7 @@ fn log_tail(app: AppHandle, which: String, lines: usize) -> String {
         "server" => logs::tail(&settings::log_path(&app, "server.log"), lines),
         "loader" => logs::tail(&settings::log_path(&app, "loader.log"), lines),
         "game" => logs::tail(&settings::log_path(&app, "game.log"), lines),
-        _ => logs::tail(&settings::log_path(&app, "launcher.log"), lines),
+        _ => logs::tail(&settings::launcher_log(&app), lines),
     }
 }
 
@@ -539,7 +539,18 @@ pub fn run() {
         }))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_store::Builder::default().build())
-        .plugin(tauri_plugin_log::Builder::new().build())
+        // the default LogDir target names the file after the product, which the ui's
+        // reader never matched. name it explicitly and both sides share one stem.
+        .plugin(
+            tauri_plugin_log::Builder::new()
+                .targets([
+                    tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::Stdout),
+                    tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::LogDir {
+                        file_name: Some(settings::LAUNCHER_LOG_STEM.into()),
+                    }),
+                ])
+                .build(),
+        )
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .manage(Shared::default())
