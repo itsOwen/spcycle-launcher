@@ -168,7 +168,7 @@ async fn run_generator(
 ) -> Result<(), CertError> {
     use tokio::io::AsyncWriteExt;
 
-    let mut cmd = crate::launch::wrap_exe(app, generator, prefix_root)
+    let mut cmd = crate::launch::wrap_exe(app, generator, prefix_root, false)
         .map_err(|e| CertError::GenerateFailed(e.to_string()))?;
     cmd.current_dir(cwd)
         .stdin(std::process::Stdio::piped())

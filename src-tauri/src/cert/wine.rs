@@ -83,7 +83,7 @@ pub async fn import(app: &AppHandle, leaf: &Leaf, prefix_root: &Path) -> Result<
     // built before the script is written: building primes the prefix, and a proton
     // change rebuilds it from scratch, deleting anything written beforehand
     let reg = Path::new("reg.exe");
-    let mut cmd = crate::launch::wrap_exe(app, reg, prefix_root)
+    let mut cmd = crate::launch::wrap_exe(app, reg, prefix_root, false)
         .map_err(|e| CertError::StoreFailed(e.to_string()))?;
 
     let temp = prefix_dir(prefix_root)
@@ -130,7 +130,7 @@ pub async fn remove(
     let key = format!("HKCU\\{ROOT_KEY}\\{thumbprint_hex}");
 
     let reg = Path::new("reg.exe");
-    let mut cmd = crate::launch::wrap_exe(app, reg, prefix_root)
+    let mut cmd = crate::launch::wrap_exe(app, reg, prefix_root, false)
         .map_err(|e| CertError::StoreFailed(e.to_string()))?;
     cmd.arg("delete").arg(&key).arg("/f");
 

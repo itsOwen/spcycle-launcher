@@ -298,7 +298,7 @@ pub async fn play(app: &AppHandle) -> Result<i32, GameError> {
         )));
     }
 
-    let mut server_cmd = launch::wrap_exe(app, &server_exe, &server_prefix)
+    let mut server_cmd = launch::wrap_exe(app, &server_exe, &server_prefix, false)
         .map_err(|e| GameError::Message(e.to_string()))?;
     server_cmd
         .current_dir(&server_dir)
@@ -344,7 +344,7 @@ pub async fn play(app: &AppHandle) -> Result<i32, GameError> {
         let mut attempt = 0;
         loop {
             attempt += 1;
-            let mut loader_cmd = launch::wrap_exe(app, &loader_exe, &prefix_root)
+            let mut loader_cmd = launch::wrap_exe(app, &loader_exe, &prefix_root, true)
                 .map_err(|e| GameError::Message(e.to_string()))?;
             loader_cmd
                 .current_dir(&win64)

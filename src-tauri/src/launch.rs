@@ -29,10 +29,16 @@ pub enum LaunchError {
 }
 
 // prefix_root holds the wine prefix. game and cert trust share one, server has its own.
-pub fn wrap_exe(app: &AppHandle, exe: &Path, prefix_root: &Path) -> Result<Command, LaunchError> {
+// is_game picks the verb on unix. see wrap_unix.
+pub fn wrap_exe(
+    app: &AppHandle,
+    exe: &Path,
+    prefix_root: &Path,
+    is_game: bool,
+) -> Result<Command, LaunchError> {
     #[cfg(windows)]
     {
-        let _ = (prefix_root, app);
+        let _ = (prefix_root, app, is_game);
         let mut cmd = Command::new(exe);
         cmd.current_dir(working_dir(exe, prefix_root));
         // tokio's Command has creation_flags inherently
@@ -42,7 +48,7 @@ pub fn wrap_exe(app: &AppHandle, exe: &Path, prefix_root: &Path) -> Result<Comma
     }
     #[cfg(unix)]
     {
-        wrap_unix(app, exe, prefix_root)
+        wrap_unix(app, exe, prefix_root, is_game)
     }
 }
 
@@ -54,11 +60,28 @@ fn working_dir<'a>(exe: &'a Path, prefix_root: &'a Path) -> &'a Path {
     }
 }
 
+#[cfg(any(unix, test))]
+fn verb_for(is_game: bool) -> &'static str {
+    if is_game {
+        "waitforexitandrun"
+    } else {
+        "runinprefix"
+    }
+}
+
 #[cfg(unix)]
-fn wrap_unix(app: &AppHandle, exe: &Path, prefix_root: &Path) -> Result<Command, LaunchError> {
-    // runinprefix. `run` puts the game behind the steam.exe shim, where it never
-    // starts, and the loader can only patch through a prefix it has to itself.
-    let verb = "runinprefix";
+fn wrap_unix(
+    app: &AppHandle,
+    exe: &Path,
+    prefix_root: &Path,
+    is_game: bool,
+) -> Result<Command, LaunchError> {
+    // `run` puts the game behind the steam.exe shim, where it never starts, so it is
+    // not an option. but runinprefix is not the alternative it looks like: proton
+    // gates setup_prefix() on `argv[1] != "runinprefix"` and then dispatches it
+    // straight to wine, skipping session setup and protonfixes entirely — half the
+    // framerate and artifacts. waitforexitandrun reaches run() without the shim.
+    let verb = verb_for(is_game);
     let info = compat::detect();
     let compatdata = prefix_root.join("compatdata");
     let _ = std::fs::create_dir_all(&compatdata);
@@ -342,6 +365,19 @@ pub async fn maybe_start_steam(app: &AppHandle) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // proton gates setup_prefix() on `argv[1] != "runinprefix"` and dispatches that
+    // verb straight to wine, so it never reaches run(): no session setup, no
+    // protonfixes. the game ran at half the framerate with artifacts until this
+    // was a waitforexitandrun. only `run` goes behind the steam.exe shim.
+    #[test]
+    fn the_game_never_launches_with_the_verb_that_skips_proton_setup() {
+        assert_eq!(verb_for(true), "waitforexitandrun");
+        assert_ne!(verb_for(true), "runinprefix");
+        assert_ne!(verb_for(true), "run");
+        // helpers want the cheap verb: they need the prefix, not a proton session
+        assert_eq!(verb_for(false), "runinprefix");
+    }
 
     // the game's prefix, or the client will not see the server's certificate
     #[test]
