@@ -112,13 +112,30 @@ pub async fn start(app: &AppHandle) -> Result<Mongo, MongoError> {
 
     // no --fork: a child we own, not a daemon that outlives us
     #[cfg(unix)]
-    cmd.arg("--nounixsocket");
+    {
+        cmd.arg("--nounixsocket");
+        // the appimage exports its own runtime, and a child that inherits it
+        // resolves libssl/libcrypto against the build machine's copies. mongod
+        // is a system binary, not ours: it must link against the host's.
+        crate::launch::scrub_appimage_env(&mut cmd);
+    }
 
     #[cfg(windows)]
     {
         // tokio's Command has creation_flags inherently
         const CREATE_NO_WINDOW: u32 = 0x0800_0000;
         cmd.creation_flags(CREATE_NO_WINDOW);
+    }
+
+    // ld.so reports a missing library on stderr and exits 127, all before mongod
+    // ever opens --logpath. without this the failure arrives as a bare exit code
+    // over an empty log. same file as --logpath: --logappend keeps both.
+    if let Ok(f) = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(&log)
+    {
+        cmd.stderr(std::process::Stdio::from(f));
     }
 
     log::info!(
