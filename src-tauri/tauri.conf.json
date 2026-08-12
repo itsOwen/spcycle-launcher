@@ -2,7 +2,7 @@
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "SPCycle Launcher",
   "mainBinaryName": "spcycle-launcher",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "identifier": "cc.spcycle.launcher",
   "build": {
     "beforeDevCommand": "pnpm dev",

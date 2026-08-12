@@ -1,6 +1,6 @@
 [package]
 name = "spcycle-launcher"
-version = "0.1.2"
+version = "0.1.3"
 description = "Singleplayer launcher for The Cycle: Frontier"
 edition = "2021"
 # steamroom (added in phase 2) is edition 2024
