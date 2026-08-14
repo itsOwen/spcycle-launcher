@@ -1,11 +1,5 @@
 #!/usr/bin/env bash
-# build the appimage in ubuntu 22.04, so it runs on any distro. glibc symbols are
-# versioned: one linked on a rolling distro starts there and nowhere older.
-#
-# the same script runs on both sides of the container. outside it sets up the
-# mounts and re-enters; inside it does the build.
-#
-#     ./tools/build-appimage.sh [--sign]   # -> out/
+
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -33,10 +27,6 @@ if [ "${SPCYCLE_IN_CONTAINER:-}" != 1 ]; then
     echo "==> building the image (ubuntu 22.04)"
     docker build -f tools/Dockerfile.appimage -t spcycle-appimage tools/
 
-    # the source is mounted, never copied, and the caches are named volumes, so a
-    # second build reuses the crates and node_modules instead of refetching them.
-    # CARGO_TARGET_DIR lands inside the mount on purpose: docker's own layer is on
-    # / , which is far smaller than the tree's filesystem, and a rust build fills it.
     echo "==> building the appimage"
     docker run --rm "${SIGN[@]}" \
         -v "$PWD:/src" \
@@ -71,16 +61,11 @@ APPDIR="$(find "$BUNDLE" -maxdepth 1 -type d -name '*.AppDir' -print -quit)"
 APPIMAGE="$(find "$BUNDLE" -maxdepth 1 -name '*.AppImage' -print -quit)"
 [ -n "$APPDIR" ] && [ -n "$APPIMAGE" ] || { echo "no AppImage was produced" >&2; exit 1; }
 
-# linuxdeploy pulls the build machine's graphics stack into the bundle, and at run
-# time those override the host's real drivers: "Could not create default EGL
-# display: EGL_BAD_PARAMETER" and a blank window. the host always has its own.
 removed="$(find "$APPDIR" \( -name 'libwayland-*' -o -name 'libEGL.so*' -o -name 'libGL.so*' \
                             -o -name 'libdrm.so*' -o -name 'libgbm.so*' -o -name 'libglapi.so*' \) \
                 -print -delete)"
 [ -n "$removed" ] && { echo "==> removed the bundled graphics stack:"; echo "$removed"; }
 
-# linuxdeploy bakes a relative libexec path into webkit, which resolves against the
-# cwd rather than the mount point, so the webview dies unless it is told the truth
 wk="$(find "$APPDIR" -type d -name 'webkit2gtk-4.1' -print -quit 2>/dev/null || true)"
 if [ -n "$wk" ]; then
     mkdir -p "$APPDIR/apprun-hooks"
@@ -93,6 +78,10 @@ if [ -n "$wk" ]; then
         || { echo "could not add the webkit hook to AppRun; its layout changed" >&2; exit 1; }
 fi
 
+if [ -f "$APPDIR/SPCycle Launcher.png" ]; then
+    ln -sfn "SPCycle Launcher.png" "$APPDIR/.DirIcon"
+fi
+
 # the .AppImage tauri produced still holds what was just deleted, so rebuild it
 TOOL="$(find "${CARGO_TARGET_DIR:-src-tauri/target}" "$HOME/.cache/tauri" -maxdepth 5 \
           -name 'linuxdeploy-plugin-appimage*.AppImage' -print -quit 2>/dev/null || true)"
@@ -103,8 +92,6 @@ echo "==> repackaging"
   && APPIMAGE_EXTRACT_AND_RUN=1 OUTPUT="$(basename "$APPIMAGE")" \
      "$(readlink -f "$TOOL")" --appdir "$(readlink -f "$APPDIR")" )
 
-# repackaging changed the bytes, so tauri's signature no longer matches them and
-# every updater would reject it. sign what we are actually shipping.
 if [ -n "${TAURI_SIGNING_PRIVATE_KEY:-}" ]; then
     echo "==> re-signing"
     rm -f "$APPIMAGE.sig"

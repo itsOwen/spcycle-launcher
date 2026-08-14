@@ -1,7 +1,3 @@
-// the three pieces not in the steam depot: the local server, the client loader and
-// mongod. each is a zip named in our release manifest, hashed as it streams, and
-// nothing reaches a live directory until every archive has passed.
-
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
@@ -10,10 +6,6 @@ use tauri::AppHandle;
 
 use crate::{progress, settings, show_bar};
 
-// overridable to try a candidate manifest; one per platform, since mongod differs
-// a fixed tag, not releases/latest: the components change on their own schedule
-// and every launcher release would otherwise have to carry all four assets or
-// break component installs for everyone on the platform whose one went missing.
 const MANIFEST_URL: &str = if cfg!(windows) {
     concat!(
         "https://github.com/itsOwen/spcycle-launcher/releases/download/",
@@ -79,8 +71,6 @@ pub struct Component {
     pub proof: &'static str,
 }
 
-// the only names ever staged. driven by this list, never the manifest's own keys,
-// so a manifest cannot name a component ../../etc/cron.d/pwn.
 pub const COMPONENTS: &[Component] = &[
     Component {
         name: "server",
@@ -183,8 +173,6 @@ pub async fn manifest() -> Result<Manifest, ComponentError> {
         })
 }
 
-// checked before a byte is requested: an entry we could never verify is not
-// worth fetching
 fn validate_digest(entry: &Entry, name: &str) -> Result<String, ComponentError> {
     let expected = entry.sha256.trim().to_ascii_lowercase();
     if expected.len() != 64 || !expected.bytes().all(|b| b.is_ascii_hexdigit()) {
@@ -330,8 +318,7 @@ pub fn extract(
         }
 
         let out = into.join(&rel);
-        // belt and braces: enclosed_name guarantees this, but the join is what
-        // actually has to be safe
+
         if !out.starts_with(into) {
             return Err(ComponentError::Message(format!(
                 "The archive tried to write outside its target: {}",
@@ -410,8 +397,6 @@ async fn stage_all(
         fetch_one(app, c.name, entry, &archive).await?;
     }
 
-    // ...then extract. off the runtime: tens of MB of synchronous inflate would
-    // stall the progress pump and the state poll.
     for (c, entry) in wanted {
         let archive = work.join(format!("{}.zip", c.name));
         let target = c.target.resolve(app);
@@ -440,8 +425,6 @@ mod tests {
         }
     }
 
-    // the manifest is data from the network. it must not widen the set of things
-    // the launcher writes, nor name a path that escapes.
     #[test]
     fn only_known_component_names_are_ever_staged() {
         let mut files = HashMap::new();
@@ -573,8 +556,6 @@ mod tests {
                 .unwrap_or_else(|e| panic!("{} is missing: {e}", path.display()));
             let manifest: Manifest = serde_json::from_str(&text).expect("it parses as a Manifest");
 
-            // the same check plan() makes, so a manifest that would be rejected at
-            // install time fails here instead
             plan(&manifest).unwrap_or_else(|e| panic!("{plat}: {e}"));
 
             for c in COMPONENTS {
@@ -612,8 +593,6 @@ mod tests {
         );
     }
 
-    // do the published manifests extract into the layout proof checks for?
-    //     RUN_LIVE=1 cargo test --lib -- --ignored --nocapture published_components
     #[test]
     #[ignore = "downloads ~65 MB; set RUN_LIVE=1"]
     fn live_published_components_extract_to_their_proof_files() {

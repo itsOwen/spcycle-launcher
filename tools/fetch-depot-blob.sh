@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
-# fetch the depot blob: 32 bytes of aes-256 depot key then a zlib steam manifest.
-# not committed, but must exist before `tauri build`. the manifest is frozen, so this
-# is a one-off. set DEPOT_BLOB_URL to pull it from your own host.
+
 set -euo pipefail
 
 cd "$(dirname "$0")/.."

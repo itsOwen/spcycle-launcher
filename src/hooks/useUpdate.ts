@@ -17,10 +17,6 @@ export function useUpdate(): UpdateState {
   const [label, setLabel] = useState("not checked");
   const [busy, setBusy] = useState(false);
 
-  // set on every mount, not just cleared on unmount. StrictMode mounts, unmounts
-  // and remounts, so a ref only ever cleared stays false for the real mount and
-  // every later setState is dropped — the check resolves and the label sits on
-  // "checking…" forever.
   const live = useRef(true);
   useEffect(() => {
     live.current = true;
@@ -64,9 +60,10 @@ export function useUpdate(): UpdateState {
 
   const dismiss = useCallback(() => setAvailable(null), []);
 
-  // one check on boot, quiet on failure: a launcher that cannot reach github
-  // still runs the game
-  useEffect(checkNow, [checkNow]);
+  useEffect(() => {
+    const id = setTimeout(checkNow, 0);
+    return () => clearTimeout(id);
+  }, [checkNow]);
 
   return { available, label, busy, checkNow, install, dismiss };
 }

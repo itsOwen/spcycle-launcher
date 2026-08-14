@@ -1,11 +1,5 @@
 #!/usr/bin/env bash
-# build the windows installer from linux, so a release needs one machine.
-# cargo-xwin supplies the MSVC CRT and Windows SDK; NSIS does the bundling.
-#
-# the same script runs on both sides of the container. outside it sets up the
-# mounts and re-enters; inside it does the build.
-#
-#     ./tools/build-windows.sh [--sign]   # -> out/
+
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -31,8 +25,6 @@ if [ "${SPCYCLE_IN_CONTAINER:-}" != 1 ]; then
     echo "==> building the image (ubuntu 22.04, cargo-xwin + nsis)"
     docker build -f tools/Dockerfile.windows -t spcycle-windows tools/
 
-    # separate target dir from the appimage build: same tree, different triple,
-    # and sharing one would make the two builds evict each other's artifacts
     echo "==> building the installer"
     docker run --rm "${SIGN[@]}" \
         -v "$PWD:/src" \
@@ -63,15 +55,11 @@ fi
 
 pnpm install --frozen-lockfile
 
-# --bundles is deliberately not passed: the cli validates that list against the
-# host, so `--bundles nsis` is rejected on linux, while the target alone picks
-# the windows bundles correctly.
 pnpm tauri build --runner cargo-xwin --target x86_64-pc-windows-msvc
 
 BUNDLE="${CARGO_TARGET_DIR:-src-tauri/target}/x86_64-pc-windows-msvc/release/bundle"
 mkdir -p out
-# by version, because the bundle directory keeps every build ever made here and
-# make-latest-json.sh signs the first installer it finds — which could be an old one
+
 VERSION=$(python3 -c "import json;print(json.load(open('src-tauri/tauri.conf.json'))['version'])")
 find "$BUNDLE" -name "*_${VERSION}_*-setup.exe*" -exec cp {} out/ \;
 [ -f "out/SPCycle Launcher_${VERSION}_x64-setup.exe" ] || { echo "no installer for $VERSION" >&2; exit 1; }

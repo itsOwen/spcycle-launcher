@@ -114,9 +114,7 @@ pub async fn start(app: &AppHandle) -> Result<Mongo, MongoError> {
     #[cfg(unix)]
     {
         cmd.arg("--nounixsocket");
-        // the appimage exports its own runtime, and a child that inherits it
-        // resolves libssl/libcrypto against the build machine's copies. mongod
-        // is a system binary, not ours: it must link against the host's.
+
         crate::launch::scrub_appimage_env(&mut cmd);
     }
 
@@ -127,9 +125,6 @@ pub async fn start(app: &AppHandle) -> Result<Mongo, MongoError> {
         cmd.creation_flags(CREATE_NO_WINDOW);
     }
 
-    // ld.so reports a missing library on stderr and exits 127, all before mongod
-    // ever opens --logpath. without this the failure arrives as a bare exit code
-    // over an empty log. same file as --logpath: --logappend keeps both.
     if let Ok(f) = std::fs::OpenOptions::new()
         .create(true)
         .append(true)
@@ -179,13 +174,50 @@ pub async fn start(app: &AppHandle) -> Result<Mongo, MongoError> {
 }
 
 impl Mongo {
-    pub fn uri(&self) -> String {
-        format!("mongodb://127.0.0.1:{}/", self.port)
-    }
-
     // ponytail: hard kill. wiredtiger journals, so the cost is replay on next start.
     pub fn stop(&mut self) {
         let _ = self.child.start_kill();
+    }
+
+    // start_kill only signals, and the next start needs the dbpath lock released
+    pub async fn stop_and_reap(&mut self) {
+        let _ = self.child.start_kill();
+        let _ = self.child.wait().await;
+    }
+}
+
+// ---- the one instance the launcher owns ----
+
+static CURRENT: tokio::sync::Mutex<Option<Mongo>> = tokio::sync::Mutex::const_new(None);
+
+pub async fn ensure(app: &AppHandle) -> Result<(u16, bool), MongoError> {
+    let mut held = CURRENT.lock().await;
+    if let Some(m) = held.as_mut() {
+        match m.child.try_wait() {
+            Ok(None) => return Ok((m.port, false)),
+            _ => {
+                log::info!("the mongod we held is gone; starting another");
+                held.take();
+            }
+        }
+    }
+    let m = start(app).await?;
+    let port = m.port;
+    *held = Some(m);
+    Ok((port, true))
+}
+
+pub async fn shutdown() {
+    if let Some(mut m) = CURRENT.lock().await.take() {
+        m.stop_and_reap().await;
+    }
+}
+
+pub fn shutdown_now() {
+    if let Ok(mut held) = CURRENT.try_lock() {
+        if let Some(mut m) = held.take() {
+            m.stop();
+        }
     }
 }
 

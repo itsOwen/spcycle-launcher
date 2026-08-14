@@ -1,42 +1,40 @@
 @import "tailwindcss";
 
-/* self-hosted, bundled by vite. latin subset only, two weights. */
 @import "@fontsource/ibm-plex-mono/latin-400.css";
 @import "@fontsource/ibm-plex-mono/latin-600.css";
 
 @theme {
-  /* surfaces: near-black, warm-neutral, four steps */
+
   --color-void: #0a0a0b;
-  /* opaque enough that panel text sits on a known ground: the backdrop behind
-     them is brighter now, and ink-3 has to stay at 4.5:1 wherever a panel lands */
+
   --color-panel: #101013f2;
   --color-panel-2: #16161af5;
   --color-panel-3: #1c1c21f5;
   --color-hair: #23232a;
   --color-hair-lit: #33333d;
 
-  /* amber is the only accent. fortuna iii instrumentation. */
   --color-amber: #f0a021;
   --color-amber-hi: #ffc25c;
   --color-amber-dim: #7a5310;
   --color-amber-ink: #171004;
   --color-amber-wash: #f0a02114;
 
-  /* type: warm white, never #fff */
   --color-ink: #e8e3d7;
   --color-ink-2: #9a948a;
-  /* >=4.5:1 on all three panel grounds, not just the darkest. it carries real
-     information — every field label, the rail's service names, the rate and eta —
-     so it cannot sit at decorative-text contrast. #7d786e met that on --color-panel
-     alone and fell to 3.87:1 on --color-panel-3. */
+
   --color-ink-3: #8a8478;
 
-  /* leds: amber lit / grey unlit / one red. no green anywhere. */
+  --color-tier-common: #8a8478;
+  --color-tier-uncommon: #5c8a5e;
+  --color-tier-rare: #4a7fae;
+  --color-tier-epic: #8a6bb0;
+  --color-tier-legendary: #c88a2e;
+  --color-tier-exotic: #b8564c;
+
   --color-led-up: #f0a021;
   --color-led-idle: #2c2c33;
   --color-led-fail: #e0483d;
 
-  /* hard corners everywhere: rounded-* becomes a no-op */
   --radius-xs: 0px;
   --radius-sm: 0px;
   --radius-md: 0px;
@@ -47,7 +45,7 @@
   --radius-full: 0px;
 
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
-  /* aliased so a stray font-sans cannot leak system-ui back in */
+
   --font-sans: "IBM Plex Mono", ui-monospace, monospace;
 
   --text-hud: 0.75rem;
@@ -55,9 +53,6 @@
   --text-big: 1.75rem;
   --tracking-hud: 0.18em;
 }
-
-/* everything below must be inside a layer: unlayered rules outrank every
-   @layer utilities declaration */
 
 @layer base {
   html,
@@ -68,7 +63,8 @@
 
   body {
     margin: 0;
-    background: transparent;
+
+    background: var(--color-void);
     color: var(--color-ink);
     font-family: var(--font-mono);
     font-size: var(--text-data);
@@ -78,19 +74,6 @@
     cursor: default;
   }
 
-  /* the key art, held well back: atmosphere behind the instruments, never
-     competing with them. the slow drift is the only ambient motion. */
-  body::before {
-    content: "";
-    position: fixed;
-    inset: -2%;
-    z-index: -2;
-    background: url("./assets/backdrop.webp") center / cover no-repeat;
-    filter: saturate(0.9) brightness(0.78);
-    animation: backdrop-drift 48s ease-in-out infinite alternate;
-  }
-
-  /* scrim: darkest under the rail and the bottom bar, where type sits */
   body::after {
     content: "";
     position: fixed;
@@ -102,7 +85,6 @@
       linear-gradient(0deg, var(--color-void) 0 5%, transparent 34%);
   }
 
-  /* focus ring: amber hairline, matches the hard-cornered language */
   :focus-visible {
     outline: 1px solid var(--color-amber);
     outline-offset: 1px;
@@ -129,7 +111,6 @@
     text-transform: uppercase;
   }
 
-  /* webkit ignores background-color on these unless appearance is cleared */
   .field {
     appearance: none;
     -webkit-appearance: none;
@@ -151,7 +132,6 @@
     color: var(--color-ink-3);
   }
 
-  /* the chevron the cleared appearance took away */
   select.field {
     padding-right: 1.75rem;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239a948a'/%3E%3C/svg%3E");
@@ -159,13 +139,11 @@
     background-position: right 0.625rem center;
   }
 
-  /* the option list is drawn by the platform, so give it readable colours */
   select.field option {
     background: var(--color-panel-2);
     color: var(--color-ink);
   }
 
-  /* the spin buttons are unreadable against a dark field and add nothing */
   .field[type="number"] {
     -moz-appearance: textfield;
   }
@@ -180,19 +158,36 @@
   .field::placeholder {
     color: var(--color-ink-3);
   }
+
+  .vol {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+    height: 2px;
+    background: var(--color-hair-lit);
+    border-radius: 0;
+  }
+
+  .vol::-webkit-slider-thumb {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 6px;
+    height: 12px;
+    border: 0;
+    border-radius: 0;
+    background: var(--color-amber);
+  }
+
+  .vol:disabled::-webkit-slider-thumb {
+    background: var(--color-hair-lit);
+  }
+
+  .vol:focus-visible {
+    outline: 1px solid var(--color-amber);
+    outline-offset: 4px;
+  }
 }
 
-
-@keyframes backdrop-drift {
-  from {
-    transform: scale(1.04) translate3d(0, 0, 0);
-  }
-  to {
-    transform: scale(1.1) translate3d(-1.2%, -0.8%, 0);
-  }
-}
-
-/* the boot sequence: everything arrives from below, staggered by depth */
 @keyframes rise {
   from {
     opacity: 0;
@@ -215,7 +210,6 @@
   }
 }
 
-/* a hairline that draws itself, used under the boot wordmark */
 @keyframes rule-draw {
   from {
     transform: scaleX(0);
@@ -277,12 +271,10 @@
     animation: rule-draw 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 
-  /* the launch button, when it is the thing to press */
   .glow-breathe {
     animation: glow-breathe 3.2s ease-in-out infinite;
   }
 
-  /* panels lift very slightly toward the cursor */
   .panel-hover {
     transition:
       border-color 0.18s ease,
@@ -295,7 +287,6 @@
   }
 }
 
-/* a service coming up */
 @keyframes led-pulse {
   0%,
   100% {
@@ -343,7 +334,6 @@
     opacity: 0.6 !important;
   }
 
-  body::before,
   .glow-breathe {
     animation: none !important;
   }
@@ -352,7 +342,6 @@
     transform: none !important;
   }
 
-  /* without this the bar freezes at the end of its travel, reading as stalled */
   .progress-indeterminate {
     width: 100% !important;
     transform: none !important;

@@ -1,7 +1,3 @@
-// removing what the launcher installed and nothing else. the game directory is the
-// user's choice, so a whole-directory delete needs every entry to be ours. guards are
-// re-checked before the delete, never trusted from the plan the user confirmed.
-
 use std::path::{Path, PathBuf};
 
 use serde::Serialize;
@@ -9,8 +5,6 @@ use tauri::AppHandle;
 
 use crate::{cert, game, mongo, proc, settings};
 
-// top-level names a depot install leaves behind. the game's, not ours, so they
-// only ever come out as part of a whole-directory delete.
 const DEPOT_ENTRIES: &[&str] = &[
     "BattlEye",
     "Engine",
@@ -25,8 +19,6 @@ const DEPOT_ENTRIES: &[&str] = &[
     "Manifest_NonUFSFiles_Win64.txt",
 ];
 
-// files the loader drops into Win64, removed by name so an install can be
-// reverted to plain game files
 const LOADER_FILES: &[&str] = &[
     "Prospect.Client.Loader.exe",
     "Prospect.Agent.dll",
@@ -115,11 +107,7 @@ fn our_entries(dir: &Path) -> Vec<PathBuf> {
         .collect()
 }
 
-// never follows symlinks, here or in size_of: a link into $HOME must not become
-// a route out of the install
 fn remove(path: &Path) -> std::io::Result<()> {
-    // windows keeps an image locked past TerminateProcess, so uninstalling straight
-    // after game::stop intermittently failed on mongod.exe and the server exe
     let mut attempt = 0;
     loop {
         match remove_once(path) {
@@ -233,8 +221,10 @@ fn targets(app: &AppHandle) -> Vec<(Item, Target)> {
     for (label, path) in [
         ("Components", settings::components_dir(app)),
         ("MongoDB", settings::mongo_dir(app)),
-        // the server's own wine prefix. hundreds of megabytes, and nothing else
-        // would ever remove it.
+        (
+            "Stash backups",
+            settings::app_data(app).join("stash-backups"),
+        ),
         ("Server prefix", settings::server_prefix(app)),
     ] {
         if !path.exists() {
@@ -317,8 +307,7 @@ pub async fn execute(app: &AppHandle) -> Vec<String> {
                     .await
                     .unwrap_or(false)
             }
-            // every name is attempted: `all` short-circuits, which left the rest
-            // of the loader installed as soon as one failed
+
             Target::LoaderFiles(win64) => {
                 LOADER_FILES
                     .iter()
@@ -360,8 +349,6 @@ mod tests {
         dir
     }
 
-    // the trap this module exists for: someone points the game directory at their
-    // home directory, installs, then uninstalls
     #[test]
     fn a_real_home_directory_survives_an_uninstall() {
         let home = scratch("home");
@@ -453,8 +440,6 @@ mod tests {
         std::fs::remove_dir_all(&dir).ok();
     }
 
-    // steam's compatdata holds one prefix per app id, never pfx directly and never
-    // our stamp. mistaking it for ours would delete every steam game's saves.
     #[test]
     fn steams_shared_compatdata_is_never_mistaken_for_ours() {
         let dir = scratch("steam");
@@ -516,8 +501,6 @@ mod tests {
         assert!(our_entries(&missing).is_empty());
     }
 
-    // LOADER_FILES are deleted from Win64 by name, so a depot file sharing one
-    // would go too. ignored by default only because it reads the bundled blob.
     #[test]
     #[ignore = "reads resources/depot.blob; run tools/fetch-depot-blob.sh first"]
     fn no_loader_file_shares_a_name_with_a_depot_file() {

@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
-# type-check the #[cfg(windows)] half from linux, which a normal build never compiles.
-# level 1 is the cryptoapi module (rustup target only), level 2 the whole crate (needs
-# mingw, for aws-lc-sys). neither replaces building on real windows.
+
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -18,8 +16,6 @@ WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
 mkdir -p "$WORK/src"
 
-# lifted out of the real manifest: hardcoding it once let this pass against a
-# windows-sys the crate never declared, the exact failure it exists to catch
 {
     cat <<'EOF'
 [package]
@@ -68,11 +64,9 @@ if command -v x86_64-w64-mingw32-gcc >/dev/null 2>&1; then
     cargo check --manifest-path src-tauri/Cargo.toml --all-targets --target "$TARGET"
     echo "    ok"
 elif command -v docker >/dev/null 2>&1; then
-    # borrow a toolchain rather than ask for one on the host. the cargo cache is a
-    # named volume so a re-run is quick.
+
     echo "    no host mingw; using docker"
-    # rust-version in Cargo.toml is our floor, not the lockfile's: several
-    # transitive crates need much newer, so track the host toolchain instead.
+
     RUSTC_IMAGE="rust:$(rustc --version | cut -d' ' -f2)"
     docker run --rm \
         -v "$PWD:/w" -w /w \

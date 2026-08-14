@@ -1,7 +1,3 @@
-// native depot downloading, in place of DepotDownloader.exe. depot.blob is a zlib
-// stream: 32-byte depot key, then a steam manifest. chunks are fetched anonymously
-// and decrypted locally. every pass runs verify(true), so install/repair/resume are one.
-
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -30,8 +26,6 @@ const MAX_BLOB_BYTES: u64 = 64 * 1024 * 1024;
 // a handful is plenty to rotate between and keeps the logon response small
 const MAX_CDN_SERVERS: u32 = 20;
 
-// cell 0 is globally routable. we cannot learn the user's real cell without a
-// steam install, and a suboptimal cell costs latency, not correctness.
 const CELL_ID: CellId = CellId(0);
 
 // the frontend cannot show more than a few a second anyway
@@ -64,14 +58,11 @@ pub fn pause() -> bool {
         return false;
     };
     PAUSED.store(true, Ordering::SeqCst);
-    // notify_one leaves a permit when nothing is waiting yet, so a pause that
-    // races the start of the download is not lost. the Notify is per-pass.
+
     cancel.notify_one();
     true
 }
 
-// clears the global however the pass ends, so a later pause cannot address a
-// download that has already finished
 struct CancelGuard;
 
 impl Drop for CancelGuard {
@@ -157,8 +148,6 @@ pub fn describe(app: &AppHandle) -> Result<DepotInfo, GameError> {
     })
 }
 
-// anonymous logon purely for the cdn server list. nothing about the account is
-// used or kept, and the connection is dropped as soon as the list is in hand.
 async fn cdn_servers() -> Result<Vec<CdnServer>, GameError> {
     let client = LoginBuilder::new()
         .cell_id(CELL_ID.0)
@@ -183,14 +172,11 @@ async fn cdn_servers() -> Result<Vec<CdnServer>, GameError> {
     Ok(servers)
 }
 
-// DownloadEvents to the frontend's progress tuple. FileSkipped keeps a verify pass
-// moving; chunk bytes cover the opposite case, one multi-gigabyte pak.
 struct Pump<'a> {
     app: &'a AppHandle,
     // shown until the job reaches its first file
     label: &'a str,
-    // derived from the events, not the entry point, so a repair inside a verify
-    // pass says Downloading for the files it actually refetches
+
     verb: &'static str,
     sizes: HashMap<String, u64>,
     total: u64,
@@ -291,8 +277,6 @@ impl<'a> Pump<'a> {
     }
 }
 
-// runs one full pass over dir. returns Paused when the user stopped it, leaving
-// the partial install to resume from, or the manifest id on success.
 pub async fn run(app: &AppHandle, dir: &Path, label: &str) -> Result<u64, GameError> {
     let cancel = Arc::new(Notify::new());
     PAUSED.store(false, Ordering::SeqCst);
@@ -359,9 +343,6 @@ pub async fn run(app: &AppHandle, dir: &Path, label: &str) -> Result<u64, GameEr
 
     let mut pump = Pump::new(app, label, &manifest);
 
-    // the blocking pool, not a worker: a verify-only pass never awaits, and on a
-    // worker its lifo slot starves the progress pump until the pass ends.
-    // ponytail: abort() cannot interrupt a blocking task, so a paused pass runs itself out.
     let rt = tokio::runtime::Handle::current();
     let mut download = tokio::task::spawn_blocking(move || {
         rt.block_on(job.download(&manifest, fetcher)).map(|stats| {
@@ -394,8 +375,6 @@ pub async fn run(app: &AppHandle, dir: &Path, label: &str) -> Result<u64, GameEr
         }
     };
 
-    // detached chunk tasks may still be writing.
-    // ponytail: fixed grace rather than a join; the crate does not expose one.
     if matches!(result, Err(GameError::Paused)) {
         tokio::time::sleep(std::time::Duration::from_millis(250)).await;
     }
@@ -408,8 +387,6 @@ pub async fn run(app: &AppHandle, dir: &Path, label: &str) -> Result<u64, GameEr
     result.map(|()| manifest_id)
 }
 
-// what is left to write: manifest total less what is on disk, or a nearly-complete
-// resume gets refused for space it does not need.
 fn remaining_bytes(dir: &Path, manifest: &DepotManifest) -> Option<u64> {
     let total = manifest.total_uncompressed_size?;
     let have: u64 = manifest
@@ -461,8 +438,6 @@ mod tests {
         assert!(split_depot_blob(b"not compressed at all").is_err());
     }
 
-    // proves the manifest is read from past the key: a manifest at offset 0 must
-    // fail, because the parser is handed 32 bytes of it as the key
     #[test]
     fn the_manifest_is_read_from_after_the_key() {
         let real = std::fs::read(blob_path()).expect("run tools/fetch-depot-blob.sh");
@@ -597,8 +572,6 @@ mod tests {
         })
     }
 
-    // which tls backend the game uses, and so whether trusting our cert is possible.
-    //     RUN_LIVE=1 cargo test --lib -- --ignored --nocapture probe_tls
     #[test]
     #[ignore = "downloads the 110 MB game executable; set RUN_LIVE=1"]
     fn live_probe_tls_backend_of_the_shipping_exe() {
@@ -655,8 +628,6 @@ mod tests {
             }
         }
 
-        // ue4 uses openssl but can seed its trust store from crypt32; if those
-        // imports are there, CurrentUser\Root is the target (wine's crypt32 on linux)
         println!("\n  -- windows certificate store (crypt32) --");
         let mut store_api = 0;
         for needle in [
@@ -714,8 +685,6 @@ mod tests {
         // deliberately kept: see the comment on dir
     }
 
-    // the whole pipeline against the live cdn, smallest file only, a few KiB.
-    //     RUN_LIVE=1 cargo test -- --ignored --nocapture live_depot
     #[test]
     #[ignore = "hits the network and Steam; set RUN_LIVE=1"]
     fn live_depot_fetches_and_then_skips_the_smallest_file() {
@@ -808,8 +777,6 @@ mod tests {
         );
         assert_eq!(first.files_completed, 1, "first pass must write the file");
 
-        // verify(true) means the second pass rewrites nothing. files_completed is
-        // the signal: bytes_downloaded counts skipped files too.
         assert_eq!(second.files_completed, 0, "second pass must write nothing");
         assert!(
             second.files_skipped > first.files_skipped,
@@ -819,8 +786,6 @@ mod tests {
         std::fs::remove_dir_all(&dir).ok();
     }
 
-    // does the crate deliver events the way run wires them? downloads nothing.
-    //     RUN_LIVE=1 GAME_DIR=/path cargo test --lib -- --ignored --nocapture live_events
     #[test]
     #[ignore = "needs a real install; set RUN_LIVE=1 and GAME_DIR"]
     fn live_events_reach_the_pump() {

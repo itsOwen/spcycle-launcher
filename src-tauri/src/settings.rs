@@ -23,11 +23,6 @@ fn from_disk(path: &std::path::Path, key: &str) -> Option<serde_json::Value> {
         .cloned()
 }
 
-// the plugin's store, then the file behind it. a store that is momentarily
-// unavailable used to hand back the default for every key, silently: a launch
-// would resolve a proton the user never chose (and prime_prefix then wipes the
-// prefix over the difference), or look for the game in the default directory
-// and offer to download all 15 GiB of it again.
 fn get(app: &AppHandle, key: &str) -> Option<serde_json::Value> {
     if let Ok(store) = app.store(STORE) {
         if let Some(v) = store.get(key) {
@@ -59,8 +54,6 @@ fn bool_or(app: &AppHandle, key: &str, default: bool) -> bool {
     }
 }
 
-// degrades rather than panics: this is called from inside tauri commands, and a
-// panic there takes the command with it instead of showing the user an error
 pub fn app_data(app: &AppHandle) -> PathBuf {
     app.path().app_data_dir().unwrap_or_else(|e| {
         log::error!("no platform data directory ({e}); falling back to the working directory");
@@ -68,8 +61,6 @@ pub fn app_data(app: &AppHandle) -> PathBuf {
     })
 }
 
-// the log plugin's LogDir target writes to app_log_dir, not app_data, and names the
-// file after this stem. shared so the writer and the ui's reader cannot drift apart.
 pub const LAUNCHER_LOG_STEM: &str = "launcher";
 
 pub fn launcher_log(app: &AppHandle) -> PathBuf {
@@ -108,6 +99,26 @@ pub fn mongo_exe(app: &AppHandle) -> PathBuf {
 
 pub fn log_path(app: &AppHandle, name: &str) -> PathBuf {
     app_data(app).join(name)
+}
+
+pub fn game_log(app: &AppHandle) -> PathBuf {
+    const TAIL: &str = "Prospect/Saved/Logs/Prospect.log";
+
+    #[cfg(unix)]
+    {
+        game_directory(app)
+            .join("compatdata/pfx/drive_c/users/steamuser/AppData/Local")
+            .join(TAIL)
+    }
+
+    #[cfg(windows)]
+    {
+        let _ = app;
+        match dirs::data_local_dir() {
+            Some(local) => local.join(TAIL),
+            None => PathBuf::from(TAIL),
+        }
+    }
 }
 
 // an explicit override, the bundled resource, then the source tree for dev builds
@@ -213,8 +224,6 @@ pub fn proton_path(app: &AppHandle) -> Option<String> {
 mod tests {
     use super::*;
 
-    // the fallback is only worth having if it reads the same shape the plugin
-    // writes: a flat object, values as-is, absent keys as None.
     #[test]
     fn the_disk_fallback_reads_what_the_store_writes() {
         let dir = std::env::temp_dir().join("spcycle-settings-fallback");

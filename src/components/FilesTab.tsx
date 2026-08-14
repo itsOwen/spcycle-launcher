@@ -26,8 +26,6 @@ export function FilesTab({
 }) {
   const busy = BUSY.includes(snap.phase);
 
-  // claim() rejects while anything else runs, so a swallowed rejection was a
-  // button that visibly did nothing
   const run = (p: Promise<unknown>) => {
     p.catch((e: unknown) => onError(String(e)));
   };

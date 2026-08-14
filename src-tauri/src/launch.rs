@@ -1,6 +1,3 @@
-// windows binaries: native on windows, proton on linux. wine's certificate store
-// is per-prefix, so the game and its cert trust share one; the server has its own.
-
 use std::path::{Path, PathBuf};
 
 use tauri::AppHandle;
@@ -28,8 +25,6 @@ pub enum LaunchError {
     Message(String),
 }
 
-// prefix_root holds the wine prefix. game and cert trust share one, server has its own.
-// is_game picks the verb on unix. see wrap_unix.
 pub fn wrap_exe(
     app: &AppHandle,
     exe: &Path,
@@ -76,11 +71,6 @@ fn wrap_unix(
     prefix_root: &Path,
     is_game: bool,
 ) -> Result<Command, LaunchError> {
-    // `run` puts the game behind the steam.exe shim, where it never starts, so it is
-    // not an option. but runinprefix is not the alternative it looks like: proton
-    // gates setup_prefix() on `argv[1] != "runinprefix"` and then dispatches it
-    // straight to wine, skipping session setup and protonfixes entirely — half the
-    // framerate and artifacts. waitforexitandrun reaches run() without the shim.
     let verb = verb_for(is_game);
     let info = compat::detect();
     let compatdata = prefix_root.join("compatdata");
@@ -134,8 +124,7 @@ fn wrap_unix(
 fn proton_exe(app: &AppHandle, info: &compat::CompatInfo) -> Option<String> {
     match settings::proton_path(app) {
         Some(chosen) if Path::new(&chosen).is_file() => Some(chosen),
-        // falling back picks a different build than the user chose, and prime_prefix
-        // reads that as "the tool changed" and wipes the prefix. loud on purpose.
+
         other => {
             let fallback = info.proton.first().cloned();
             log::warn!("no usable proton from settings ({other:?}); falling back to {fallback:?}");
@@ -144,11 +133,6 @@ fn proton_exe(app: &AppHandle, info: &compat::CompatInfo) -> Option<String> {
     }
 }
 
-// build a prefix before anything reads or writes inside it. wrap_exe primes
-// lazily, which is too late for the certificate: ensure_trusted asks the prefix
-// whether the cert is already there, and a later prime that rebuilds the prefix
-// throws that answer away — the game then starts with nothing to trust and fails
-// sign-in with "Login Failed. Error code: 5", once, after every proton change.
 #[cfg(unix)]
 pub fn prepare_prefix(app: &AppHandle, prefix_root: &Path) {
     let info = compat::detect();
@@ -198,8 +182,6 @@ fn prime_prefix(proton: &str, steam_root: &str, compatdata: &Path) {
         let _ = std::fs::create_dir_all(compatdata);
     }
 
-    // `cmd /c exit`, never the real exe, which would start a second copy of it.
-    // `run` and not runinprefix: only `run` reaches setup_prefix(), which creates it.
     let mut cmd = std::process::Command::new(proton);
     cmd.arg("run")
         .arg("cmd")
@@ -366,10 +348,6 @@ pub async fn maybe_start_steam(app: &AppHandle) {
 mod tests {
     use super::*;
 
-    // proton gates setup_prefix() on `argv[1] != "runinprefix"` and dispatches that
-    // verb straight to wine, so it never reaches run(): no session setup, no
-    // protonfixes. the game ran at half the framerate with artifacts until this
-    // was a waitforexitandrun. only `run` goes behind the steam.exe shim.
     #[test]
     fn the_game_never_launches_with_the_verb_that_skips_proton_setup() {
         assert_eq!(verb_for(true), "waitforexitandrun");

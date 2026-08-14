@@ -3,12 +3,16 @@ import * as ipc from "@/lib/ipc";
 import type { Phase, Services, Snapshot } from "@/lib/ipc";
 import { bytes } from "@/lib/format";
 import { Titlebar } from "./components/Titlebar";
+import { Backdrop } from "./components/Backdrop";
+import { BackdropControls } from "./components/BackdropControls";
+import { useSettings } from "./hooks/useSettings";
 import { AboutTab } from "./components/AboutTab";
 import { Rail, type Tab } from "./components/Rail";
 import { LaunchButton } from "./components/LaunchButton";
 import { ProgressBar, type Progress } from "./components/ProgressBar";
 import { Toasts, type Toast } from "./components/Toasts";
 import { PlayTab } from "./components/PlayTab";
+import { StashTab } from "./components/StashTab";
 import { FilesTab } from "./components/FilesTab";
 import { ServerTab } from "./components/ServerTab";
 import { ConfigTab } from "./components/ConfigTab";
@@ -17,6 +21,7 @@ import { PreflightDialog } from "./components/PreflightDialog";
 import { BootSplash } from "./components/BootSplash";
 import { UpdateBanner } from "./components/UpdateBanner";
 import { useUpdate } from "@/hooks/useUpdate";
+import { useMediaSupport, missingFor } from "@/hooks/useMediaSupport";
 
 const DOWN: Services = { mongo: "down", server: "down", steam: "down" };
 
@@ -44,6 +49,8 @@ const ZERO: Progress = {
 };
 
 export default function App() {
+  // `update` here is the launcher's own updater, so the settings writer is renamed
+  const { settings, update: setSetting, loaded: settingsLoaded } = useSettings();
   const [tab, setTab] = useState<Tab>("play");
   const [snap, setSnap] = useState<Snapshot>(BOOT);
   const [progress, setProgress] = useState<Progress>(ZERO);
@@ -56,6 +63,8 @@ export default function App() {
   const [booting, setBooting] = useState(true);
   const [ready, setReady] = useState(false);
   const update = useUpdate();
+  const mediaSupport = useMediaSupport();
+  const mediaBlocked = missingFor(mediaSupport);
 
   // exponential smoothing: raw byte rates are far too jittery to show
   const rateRef = useRef({ at: 0, done: 0, smoothed: 0 });
@@ -159,8 +168,6 @@ export default function App() {
     );
   }, []);
 
-  // idle poll for state changed outside the launcher. slowed, never stopped: if
-  // events dry up this is the only thing left to re-enable the button.
   useEffect(() => {
     const idle = !showBar && snap.phase !== "PLAYING" && snap.phase !== "STARTING";
     const id = setInterval(refresh, idle ? IDLE_POLL_MS : BUSY_POLL_MS);
@@ -195,6 +202,15 @@ export default function App() {
     <div className="flex h-full flex-col">
       {booting && <BootSplash ready={ready} onDone={endBoot} />}
 
+      {/* held until the splash is gone, or its audio plays over the boot animation */}
+      <Backdrop
+        on={!booting && settingsLoaded && settings.video_backdrop}
+        sound={settings.video_sound}
+        volume={settings.video_volume}
+        suspended={snap.phase === "STARTING" || snap.phase === "PLAYING"}
+        support={mediaSupport}
+      />
+
       <Titlebar version={snap.launcherVersion} />
 
       <div className="flex min-h-0 flex-1">
@@ -206,6 +222,13 @@ export default function App() {
           {/* keyed on the tab, so switching replays the entrance */}
           <div key={tab} className="rise min-h-0 flex-1 overflow-auto">
             {tab === "play" && <PlayTab snap={snap} since={playingSince} />}
+            {tab === "stash" && (
+              <StashTab
+                snap={snap}
+                onError={(m) => toast(m, 2)}
+                onNotify={toast}
+              />
+            )}
             {tab === "files" && (
               <FilesTab
                 snap={snap}
@@ -221,7 +244,20 @@ export default function App() {
             {tab === "about" && <AboutTab version={snap.launcherVersion} />}
           </div>
 
-          <div className="rise mt-6 flex shrink-0 items-end gap-6" style={{ animationDelay: "120ms" }}>
+          <div className="rise mt-6 flex shrink-0 items-end gap-4" style={{ animationDelay: "120ms" }}>
+            <BackdropControls
+              video={settings.video_backdrop}
+              sound={settings.video_sound}
+              volume={settings.video_volume}
+              // a click before the store has been read would be overwritten by it
+              ready={settingsLoaded}
+              blocked={mediaBlocked}
+              onVideo={(v) => setSetting("video_backdrop", v)}
+              onSound={(v) => setSetting("video_sound", v)}
+              onVolume={(v) => setSetting("video_volume", v)}
+              onBlocked={(reason) => toast(reason, 2)}
+            />
+
             <div className="min-w-0 flex-1">
               {showBar && (
                 <ProgressBar

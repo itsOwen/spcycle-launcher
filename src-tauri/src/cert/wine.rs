@@ -1,7 +1,3 @@
-// wine's trusted root store, backed by the prefix registry. one subkey per cert under
-// HKCU\...\SystemCertificates\Root\Certificates, named with the uppercase hex sha-1
-// of the der. wine recomputes that hash and silently drops a cert whose name mismatches.
-
 use std::path::{Path, PathBuf};
 
 use tauri::AppHandle;
@@ -65,8 +61,6 @@ fn user_reg(prefix_root: &Path) -> PathBuf {
     prefix_dir(prefix_root).join("user.reg")
 }
 
-// reads user.reg rather than spawning reg.exe query; a false negative only
-// causes an idempotent re-import
 pub fn present(thumbprint_hex: &str, prefix_root: &Path) -> bool {
     let Ok(text) = std::fs::read_to_string(user_reg(prefix_root)) else {
         return false;
@@ -80,8 +74,6 @@ pub async fn import(app: &AppHandle, leaf: &Leaf, prefix_root: &Path) -> Result<
     let blob = serialize_blob(&leaf.der);
     let script = reg_script(&leaf.hex(), &blob);
 
-    // built before the script is written: building primes the prefix, and a proton
-    // change rebuilds it from scratch, deleting anything written beforehand
     let reg = Path::new("reg.exe");
     let mut cmd = crate::launch::wrap_exe(app, reg, prefix_root, false)
         .map_err(|e| CertError::StoreFailed(e.to_string()))?;

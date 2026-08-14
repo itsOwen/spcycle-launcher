@@ -1,24 +1,15 @@
-// finding and stopping processes we own, by executable path and never by image
-// name. enumerating costs ~55 ms, so repeat callers watch a pid or cache instead.
-
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
 use sysinfo::{Pid, ProcessRefreshKind, ProcessesToUpdate, RefreshKind, System, UpdateKind};
 
-// how long the idle poll reuses its last answer. only affects noticing a game
-// we did not start, which can wait.
 const ADOPT_TTL: Duration = Duration::from_secs(10);
 
 fn refresh_kind() -> ProcessRefreshKind {
-    // exe for native processes, cmd for the ones wine hosts: their exe is always
-    // proton's preloader, and the windows path is in the command line
     ProcessRefreshKind::new()
         .with_exe(UpdateKind::Always)
         .with_cmd(UpdateKind::Always)
-        // cwd is not free, but the loader starts the game by bare name and that is
-        // the only thing that resolves it. see wine_arg_to_host.
         .with_cwd(UpdateKind::Always)
 }
 
@@ -31,13 +22,8 @@ fn real(path: &Path) -> PathBuf {
     std::fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf())
 }
 
-// wine hosts every windows process under proton's preloader, so /proc/<pid>/exe is
-// useless and the real path is in the command line. three shapes turn up: Z:\... on
-// the host, C:\... inside the prefix (never ours), and a bare name relative to cwd.
 #[cfg(unix)]
 fn wine_arg_to_host(arg: &str, cwd: Option<&Path>) -> Option<PathBuf> {
-    // a native process is judged by its own exe path, so only windows binaries
-    // are worth resolving here
     if !arg.to_ascii_lowercase().ends_with(".exe") {
         return None;
     }
@@ -49,8 +35,6 @@ fn wine_arg_to_host(arg: &str, cwd: Option<&Path>) -> Option<PathBuf> {
         _ => None,
     };
     if let Some(d) = drive {
-        // Z: is wine's view of the host root; any other drive lives inside the
-        // prefix and is not something we started from the install
         if !d.eq_ignore_ascii_case(&'z') {
             return None;
         }
@@ -73,8 +57,6 @@ fn hosted_exe(_p: &sysinfo::Process) -> Option<PathBuf> {
     None
 }
 
-// the path a process is judged by: the windows exe when wine is hosting one,
-// otherwise the real executable
 fn exe_of(p: &sysinfo::Process) -> Option<PathBuf> {
     hosted_exe(p).or_else(|| p.exe().map(|e| e.to_path_buf()))
 }
@@ -86,8 +68,6 @@ fn is_game_exe(exe: &Path) -> bool {
         .unwrap_or(false)
 }
 
-// the ownership predicate, and the only place it is decided: an exe is ours iff
-// it resolves inside a directory we installed. both sides canonicalised first.
 fn owned_by_root(exe: &Path, root: &Path) -> bool {
     real(exe).starts_with(real(root))
 }
@@ -139,8 +119,7 @@ pub fn find_game(game_dir: &Path) -> Option<Pid> {
                 .map(|e| owned_by_root(&e, game_dir))
                 .unwrap_or(false)
         });
-    // says which process was adopted, or names the ones that looked like the game
-    // but resolved outside the install
+
     match found {
         Some((pid, p)) => {
             log::info!(
@@ -345,8 +324,6 @@ mod tests {
         invalidate();
     }
 
-    // sysinfo populates neither cmd nor cwd unless asked, and without them the game
-    // is never found: the launcher sits in "starting" until it times out.
     #[test]
     fn the_scan_asks_for_the_fields_ownership_depends_on() {
         let kind = refresh_kind();
@@ -389,8 +366,6 @@ mod tests {
             "and it is inside the install"
         );
 
-        // lower case drive letters are equally valid, and so are forward slashes:
-        // wine accepts both and the loader is not consistent about which it uses
         assert!(wine_arg_to_host(r"z:\tmp\x.exe", None).is_some());
         assert_eq!(
             wine_arg_to_host("Z:/tmp/x.exe", None),
@@ -405,8 +380,6 @@ mod tests {
         assert!(wine_arg_to_host("Z:", None).is_none());
     }
 
-    // the loader starts the game by bare name; without cwd this timed out at 120 s
-    // while the game was on screen.
     #[cfg(unix)]
     #[test]
     fn a_bare_exe_name_resolves_against_the_process_working_directory() {
@@ -435,15 +408,12 @@ mod tests {
 
         // without a cwd there is nothing to resolve against
         assert!(wine_arg_to_host("Prospect-Win64-Shipping.exe", None).is_none());
-        // and a name that resolves to nothing on disk is not a running process:
-        // otherwise any process merely sitting in the install would pass for the game
+
         assert!(wine_arg_to_host("NotThere.exe", Some(&win64)).is_none());
 
         std::fs::remove_dir_all(&win64).ok();
     }
 
-    // reported "the game did not start" while it was running: the preloader is not
-    // under the install, so /proc/<pid>/exe finds nothing.
     #[cfg(unix)]
     #[test]
     fn protons_preloader_is_not_mistaken_for_the_game() {
@@ -458,8 +428,7 @@ mod tests {
 
 #[cfg(test)]
 mod cost {
-    // what the repeating callers actually cost:
-    //     cargo test --lib -- --ignored --nocapture snapshot_cost
+
     #[test]
     #[ignore = "timing measurement; run with --nocapture"]
     fn snapshot_cost() {

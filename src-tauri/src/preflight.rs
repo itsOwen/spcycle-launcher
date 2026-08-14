@@ -1,6 +1,3 @@
-// what is missing from this machine before the game can run
-// windows needs nothing checked; linux needs steam and a proton build
-
 use serde::Serialize;
 use tauri::AppHandle;
 
@@ -50,8 +47,6 @@ fn finish(distro: String, checks: Vec<Check>) -> Preflight {
     }
 }
 
-// disk and cpu are the launcher's problem on every platform. proton, steam and
-// the package manager are not, which is why the rest of the list is unix-only.
 fn universal_checks(app: &AppHandle) -> Vec<Check> {
     // 40 GiB, because the depot unpacks to 36.8
     const NEEDED: u64 = 40 * 1024 * 1024 * 1024;
@@ -197,8 +192,6 @@ fn install_cmd(family: Family, package: &str) -> Option<String> {
     })
 }
 
-// std asks the cpu directly, which works on every platform and does not depend
-// on /proc being mounted or on how a kernel formats it
 fn has_avx() -> bool {
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     {

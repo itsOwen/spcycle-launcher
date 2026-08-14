@@ -123,8 +123,6 @@ const SERVER_READY_TIMEOUT: std::time::Duration = std::time::Duration::from_secs
 // how long the game gets to appear after the loader starts
 const GAME_APPEAR_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(120);
 
-// a game still alive this long after it appeared has won the patch race: it is
-// past the movie player and into the engine, which is where a lost race kills it
 const SURVIVED: std::time::Duration = std::time::Duration::from_secs(25);
 // enough that losing the race three times running is not worth planning for
 const START_ATTEMPTS: u32 = 3;
@@ -138,7 +136,8 @@ struct Teardown<'a> {
     server_prefix: std::path::PathBuf,
     loader: Option<Child>,
     server: Option<Child>,
-    mongo: Option<mongo::Mongo>,
+    // whether this session started mongod. one started from the stash tab outlives it.
+    mongo_started: bool,
 }
 
 impl Drop for Teardown<'_> {
@@ -161,12 +160,14 @@ impl Drop for Teardown<'_> {
             launch::reset_prefix(self.app, &self.server_prefix);
         }
 
-        if let Some(mut m) = self.mongo.take() {
-            m.stop();
+        if self.mongo_started {
+            mongo::shutdown_now();
         }
         crate::presence::clear();
         crate::set_service(self.app, |s| {
-            s.mongo = ServiceState::Down;
+            if self.mongo_started {
+                s.mongo = ServiceState::Down;
+            }
             s.server = ServiceState::Down;
             s.steam = ServiceState::Down;
         });
@@ -192,9 +193,6 @@ fn log_file(app: &AppHandle, name: &str) -> std::process::Stdio {
     }
 }
 
-// watches a freshly started game for SURVIVED, and reports whether it died inside
-// that window. returns as soon as it dies, so a good start costs the full wait
-// once and a bad one is retried immediately.
 async fn died_early(pid: sysinfo::Pid, started: std::time::Instant) -> bool {
     let mut watch = proc::Watch::new(pid);
     while started.elapsed() < SURVIVED {
@@ -213,8 +211,6 @@ pub async fn play(app: &AppHandle) -> Result<i32, GameError> {
     // the game's prefix, rooted at the game directory. see launch.rs.
     let prefix_root = dir.clone();
 
-    // the server needs its own prefix: wine only allows the loader's cross-process
-    // writes when it owns the prefix's session. sharing it means an unpatched game.
     let server_prefix = settings::server_prefix(app);
 
     let mut down = Teardown {
@@ -224,7 +220,7 @@ pub async fn play(app: &AppHandle) -> Result<i32, GameError> {
         server_prefix: server_prefix.clone(),
         loader: None,
         server: None,
-        mongo: None,
+        mongo_started: false,
     };
 
     // 0 - gate. files can vanish between the phase poll and the button press.
@@ -240,21 +236,19 @@ pub async fn play(app: &AppHandle) -> Result<i32, GameError> {
         ));
     }
 
-    // 1 — mongod.
     crate::set_service(app, |s| s.mongo = ServiceState::Starting);
-    let mongo = match mongo::start(app).await {
-        Ok(m) => m,
+    let (port, started) = match mongo::ensure(app).await {
+        Ok(v) => v,
         Err(e) => {
             crate::set_service(app, |s| s.mongo = ServiceState::Failed);
             return Err(GameError::Message(e.to_string()));
         }
     };
-    let mongo_uri = mongo.uri();
-    down.mongo = Some(mongo);
+
+    let mongo_uri = format!("mongodb://127.0.0.1:{port}/?journal=true");
+    down.mongo_started = started;
     crate::set_service(app, |s| s.mongo = ServiceState::Up);
 
-    // rebuild both prefixes now, if proton changed, so the certificate check below
-    // sees the prefix the game will actually run in
     #[cfg(unix)]
     {
         launch::prepare_prefix(app, &server_prefix);
@@ -317,8 +311,6 @@ pub async fn play(app: &AppHandle) -> Result<i32, GameError> {
     wait_for_server(app, &mut down).await?;
     crate::set_service(app, |s| s.server = ServiceState::Up);
 
-    // 5 — the client loader. steam_appid.txt is not checked for: the loader writes
-    // it itself, so a missing one only ever triggered a restage on first launch.
     let win64 = settings::win64_dir(app);
     let loader_exe = win64.join(LOADER_EXE);
     if !loader_exe.is_file() {
@@ -333,13 +325,6 @@ pub async fn play(app: &AppHandle) -> Result<i32, GameError> {
     #[cfg(unix)]
     launch::reset_prefix(app, &prefix_root);
 
-    // no arguments: it finds the game and the dlls next to itself, and supplies
-    // the game's own command line (-log -steam_auth PF_TITLEID=2EA46)
-    // the loader resumes the game before it patches it — CreateProcessW with
-    // CREATE_SUSPENDED, ResumeThread, and only then the seven writes — so the game
-    // is already executing while its code is being rewritten. lose that race and it
-    // dies within a few seconds, every time at a different point. we cannot fix
-    // their binary, so a start that dies that fast is started again.
     let pid = {
         let mut attempt = 0;
         loop {
@@ -393,8 +378,6 @@ pub async fn play(app: &AppHandle) -> Result<i32, GameError> {
         crate::presence::set_playing(since);
     }
 
-    // 7 - wait for the game, not the loader, which exits once it has patched.
-    // one pid, not a rescan: a full enumeration is ~55 ms and this loops all session.
     let mut watch = proc::Watch::new(pid);
     while watch.alive() {
         tokio::time::sleep(std::time::Duration::from_secs(2)).await;
@@ -477,6 +460,7 @@ async fn wait_for_game(dir: &Path, down: &mut Teardown<'_>) -> Result<sysinfo::P
 pub fn stop(app: &AppHandle) {
     let dir = settings::game_directory(app);
     let killed = proc::kill_under(&dir) + proc::kill_under(&settings::server_dir(app));
+    mongo::shutdown_now();
     let swept = mongo::sweep_orphans(app);
     log::info!("stop: {killed} game/server process(es), {swept} mongod");
     crate::set_service(app, |s| {

@@ -9,6 +9,7 @@ pub enum Busy {
     Playing,
     Uninstalling,
     Updating,
+    Stash,
 }
 
 impl Busy {
@@ -22,6 +23,7 @@ impl Busy {
             Busy::Playing => "The game",
             Busy::Uninstalling => "Uninstalling",
             Busy::Updating => "The launcher update",
+            Busy::Stash => "The stash editor",
         }
     }
 }
@@ -40,6 +42,7 @@ pub enum Phase {
     Playing,
     Uninstalling,
     Updating,
+    Editing,
 }
 
 impl From<Busy> for Phase {
@@ -52,6 +55,7 @@ impl From<Busy> for Phase {
             Busy::Playing => Phase::Playing,
             Busy::Uninstalling => Phase::Uninstalling,
             Busy::Updating => Phase::Updating,
+            Busy::Stash => Phase::Editing,
         }
     }
 }
@@ -105,6 +109,7 @@ mod tests {
             Busy::Playing,
             Busy::Uninstalling,
             Busy::Updating,
+            Busy::Stash,
         ] {
             let phase = Phase::from(b);
             assert!(

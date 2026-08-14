@@ -7,21 +7,18 @@ const FADE_MS = 520;
 
 export function BootSplash({ ready, onDone }: { ready: boolean; onDone: () => void }) {
   const [elapsed, setElapsed] = useState(false);
-  const [leaving, setLeaving] = useState(false);
+  const leaving = elapsed && ready;
 
   useEffect(() => {
     const id = setTimeout(() => setElapsed(true), MIN_MS);
     return () => clearTimeout(id);
   }, []);
 
-  // `leaving` is deliberately not a dependency: it would re-run this effect and
-  // cancel the timeout that unmounts us, stranding an invisible overlay.
   useEffect(() => {
-    if (!elapsed || !ready) return;
-    setLeaving(true);
+    if (!leaving) return;
     const id = setTimeout(onDone, FADE_MS);
     return () => clearTimeout(id);
-  }, [elapsed, ready, onDone]);
+  }, [leaving, onDone]);
 
   return (
     <div

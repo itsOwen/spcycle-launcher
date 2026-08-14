@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
-# build the updater manifest from the built artifacts. a wrong or missing signature
-# fails silently for the user, so this errors rather than emit half a file.
-#
-#   ./tools/make-latest-json.sh v0.1.1 out
+
 set -euo pipefail
 
 TAG=${1:?usage: make-latest-json.sh <tag> <dir>}
@@ -32,8 +29,7 @@ for platform in "${!GLOB[@]}"; do
         exit 1
     fi
     name=$(basename "$file")
-    # github renames an asset's spaces to dots on upload, so the url it serves is
-    # not the name on disk. get this wrong and every update 404s.
+
     url_name=${name// /.}
     signature=$(tr -d '\n' < "$sig")
 

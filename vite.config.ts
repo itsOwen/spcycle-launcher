@@ -16,7 +16,7 @@ export default defineConfig({
   build: {
     target: "es2021",
     sourcemap: false,
-    // fonts are the only assets; inlining them would bloat the js chunk
+    // fonts and 286 item icons; inlining them would bloat the js chunk
     assetsInlineLimit: 0,
   },
 });

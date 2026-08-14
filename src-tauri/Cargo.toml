@@ -1,6 +1,6 @@
 [package]
 name = "spcycle-launcher"
-version = "0.1.3"
+version = "0.1.4"
 description = "Singleplayer launcher for The Cycle: Frontier"
 edition = "2021"
 # steamroom (added in phase 2) is edition 2024
@@ -69,6 +69,14 @@ zip = { version = "2", default-features = false, features = ["deflate"] }
 open = "5"
 # process detection and free-space checks
 sysinfo = { version = "0.32", default-features = false, features = ["system", "disk"] }
+# the stash editor. bson-3, compat-3-3-0 and a tls backend are each a compile_error!
+# without them, even though ours is a loopback uri that never negotiates one; rustls
+# picks ring, already here via reqwest. dns-resolver is for mongodb+srv:// only.
+mongodb = { version = "3", default-features = false, features = [
+    "bson-3",
+    "compat-3-3-0",
+    "rustls-tls",
+] }
 
 [target.'cfg(windows)'.dependencies]
 # HKCU\Software\Valve\Steam\SteamPath — three lines instead of forty of windows-sys

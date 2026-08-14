@@ -13,9 +13,17 @@ export type Phase =
   | "STARTING"
   | "PLAYING"
   | "UNINSTALLING"
-  | "UPDATING";
+  | "UPDATING"
+  | "EDITING";
 
 export type ServiceState = "down" | "starting" | "up" | "failed";
+
+// on linux the webview decodes through gstreamer, which a distro may not have
+export interface MediaSupport {
+  video: boolean;
+  audioSink: boolean;
+  h264: boolean;
+}
 
 export interface Services {
   mongo: ServiceState;
@@ -23,7 +31,7 @@ export interface Services {
   steam: ServiceState;
 }
 
-export interface InstallState {
+interface InstallState {
   gameFiles: boolean;
   components: boolean;
   manifestId: string;
@@ -62,7 +70,7 @@ export interface CompatInfo {
   steamRoot: string | null;
 }
 
-export type Severity = "blocking" | "degraded";
+type Severity = "blocking" | "degraded";
 
 export interface Check {
   id: string;
@@ -112,8 +120,55 @@ export const pickGameDirectory = () => invoke<string | null>("pick_game_director
 export const openGameFolder = () => invoke<void>("open_game_folder");
 export const openLauncherFolder = () => invoke<void>("open_launcher_folder");
 export const openLink = (url: string) => invoke<void>("open_link", { url });
+export const mediaSupport = () => invoke<MediaSupport>("media_support");
+export const mediaUrl = () => invoke<string>("media_url");
+
 export const logTail = (which: LogKind, lines = 200) =>
   invoke<string>("log_tail", { which, lines });
+
+export const stashLoad = () => invoke<StashData>("stash_load");
+
+export const stashSave = (
+  playfabId: string,
+  items: string,
+  balance: string | null,
+) => invoke<void>("stash_save", { playfabId, items, balance });
+
+export const stashSnapshot = (
+  playfabId: string,
+  items: string,
+  balance: string | null,
+) => invoke<string>("stash_snapshot", { playfabId, items, balance });
+
+export const stashStopDb = () => invoke<void>("stash_stop_db");
+
+export const stashBackups = () => invoke<Backup[]>("stash_backups");
+
+export const stashBackupRead = (name: string) =>
+  invoke<StashData>("stash_backup_read", { name });
+
+export const stashBackupDelete = (name: string) =>
+  invoke<void>("stash_backup_delete", { name });
+
+export const stashBackupRename = (name: string, to: string) =>
+  invoke<string>("stash_backup_rename", { name, to });
+
+interface StashProfile {
+  playfabId: string;
+  items: string;
+  balance: string | null;
+}
+
+export interface StashData {
+  profiles: StashProfile[];
+}
+
+export interface Backup {
+  name: string;
+  at: number;
+  bytes: number;
+  items: number;
+}
 
 // ---- events ----
 

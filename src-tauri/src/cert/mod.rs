@@ -1,7 +1,3 @@
-// trusting the server's cert: the game is openssl but seeds its roots from the windows
-// store, so it goes into CurrentUser\Root (wine's, inside the game prefix, on linux).
-// generate_ssl.exe writes the pkcs#12 unencrypted, so an asn.1 walk lifts the der out.
-
 #[cfg(windows)]
 mod windows;
 
@@ -140,8 +136,6 @@ fn leaf_from_pfx(pfx: &[u8]) -> Result<Leaf, CertError> {
     Ok(Leaf { der, thumbprint })
 }
 
-// prefix_root is linux-only: the generator is a windows binary and must run
-// inside the same prefix as the server and the game
 pub async fn ensure_cert(app: &AppHandle, prefix_root: &Path) -> Result<Leaf, CertError> {
     let pfx = pfx_path(app);
 
@@ -373,8 +367,6 @@ mod tests {
         }
     }
 
-    // the fixtures build their bag from CERT_BAG_OID itself, so a malformed constant
-    // would satisfy them and still never match a real file. this checks the encoding.
     #[test]
     fn the_cert_bag_oid_is_a_well_formed_der_object_identifier() {
         const OID: &[u8] = &[
@@ -388,8 +380,6 @@ mod tests {
         );
     }
 
-    // the only thing that proves the walk works end to end.
-    //     PFX=.../certificate.pfx cargo test --lib -- --ignored --nocapture real_pfx
     #[test]
     #[ignore = "needs a generated certificate.pfx; set PFX"]
     fn live_parses_a_real_pfx() {

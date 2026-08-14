@@ -3,7 +3,7 @@ import { Panel, Row } from "./kit";
 
 const DISCORD = "https://discord.gg/rUk4zCfMc8";
 
-const SP_CYCLE_TEAM = ["DADDY DRAVEN", "Slick Daddy"];
+const SP_CYCLE_TEAM = ["Constance", "DADDY DRAVEN", "Slick Daddy"];
 
 const RECYCLE_TEAM = [
   "DisguisedCoBot",
@@ -29,11 +29,9 @@ function People({ title, names }: { title: string; names: string[] }) {
 }
 
 export function AboutTab({ version }: { version: string }) {
-  // through the backend: the webview has no opener of its own, and open_link
-  // refuses anything that is not http(s)
+
   const open = () => {
-    // nothing to fall back to if the host has no browser registered, but the
-    // reason belongs somewhere other than nowhere
+
     void ipc.openLink(DISCORD).catch((e) => console.error("could not open Discord:", e));
   };
 
@@ -48,13 +46,28 @@ export function AboutTab({ version }: { version: string }) {
       <People title="SP-Cycle Team" names={SP_CYCLE_TEAM} />
       <People title="Project: ReCycle Team" names={RECYCLE_TEAM} />
 
+      <Panel title="Cinematic">
+        <p className="max-w-[56ch] py-1.5 leading-relaxed text-ink-2">
+          The background footage is from the fan-made short film "This Game Is
+          Beautiful: The Cycle" by oussama derrouiche. Turn it off with the
+          control in the title bar.
+        </p>
+      </Panel>
+
+      <Panel title="Item catalogue">
+        <p className="max-w-[56ch] py-1.5 leading-relaxed text-ink-2">
+          The stash tab's item definitions and icons come from the community save
+          editor by Lxjo and Constance. The data is theirs; only the editor around
+          it is ours.
+        </p>
+      </Panel>
+
       <Panel title="Community">
         <div className="py-1.5">
           <p className="text-ink-2">
             Questions, bug reports and everything else happen on Discord.
           </p>
-          {/* selectable as well as clickable: on a machine with no browser
-              registered, copying the link is the only way through */}
+
           <button
             onClick={open}
             className="mt-2 text-amber underline underline-offset-2 transition-colors select-text hover:text-ink"

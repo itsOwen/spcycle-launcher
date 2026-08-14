@@ -1,0 +1,2585 @@
+{
+ "AF_Slag": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Af Slag",
+  "rarity": "exotic",
+  "stack": 3
+ },
+ "AF_Token": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Af Token",
+  "rarity": "legendary",
+  "stack": 5
+ },
+ "AI_CrusherHead": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Crusher Head",
+  "rarity": "legendary",
+  "stack": 5
+ },
+ "AI_CrusherMeat": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Crusher Flesh",
+  "rarity": "epic",
+  "stack": 10
+ },
+ "AI_CrusherSkin": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Crusher Hide",
+  "rarity": "rare",
+  "stack": 10
+ },
+ "AI_RattlerEyes": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Rattler Eyes",
+  "rarity": "uncommon",
+  "stack": 10
+ },
+ "AI_RattlerEyes_02": {
+  "category": "other",
+  "durability": -1,
+  "name": "AI Rattler Eyes 02",
+  "rarity": "common",
+  "stack": 50
+ },
+ "AI_RattlerHead": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Rattler Head",
+  "rarity": "legendary",
+  "stack": 5
+ },
+ "AI_RattlerHead_02": {
+  "category": "other",
+  "durability": -1,
+  "name": "AI Rattler Head 02",
+  "rarity": "common",
+  "stack": 50
+ },
+ "AI_RattlerSkin": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Rattler Skin",
+  "rarity": "common",
+  "stack": 10
+ },
+ "AI_StriderHead": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Strider Head",
+  "rarity": "legendary",
+  "stack": 5
+ },
+ "AI_StriderHead_03": {
+  "category": "other",
+  "durability": -1,
+  "name": "AI Strider Head 03",
+  "rarity": "common",
+  "stack": 50
+ },
+ "AI_StriderMeat": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Strider Meat",
+  "rarity": "uncommon",
+  "stack": 10
+ },
+ "AI_StriderMeat_03": {
+  "category": "other",
+  "durability": -1,
+  "name": "AI Strider Meat 03",
+  "rarity": "common",
+  "stack": 50
+ },
+ "AI_WeremoleHead": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Ai Weremolehead",
+  "rarity": "legendary",
+  "stack": 5
+ },
+ "AI_WeremoleHead_02": {
+  "category": "other",
+  "durability": -1,
+  "name": "AI Weremole Head 02",
+  "rarity": "common",
+  "stack": 50
+ },
+ "AI_WeremoleMeat": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Ai Weremolemeat",
+  "rarity": "rare",
+  "stack": 10
+ },
+ "AI_WeremoleMeat_02": {
+  "category": "other",
+  "durability": -1,
+  "name": "AI Weremole Meat 02",
+  "rarity": "common",
+  "stack": 50
+ },
+ "Adhesive": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Resin Gun",
+  "rarity": "uncommon",
+  "stack": 10
+ },
+ "AlienFruit": {
+  "category": "other",
+  "durability": -1,
+  "name": "Alien Fruit",
+  "rarity": "common",
+  "stack": 50
+ },
+ "Alien_Scrap": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Alien Scrap",
+  "rarity": "common",
+  "stack": 10
+ },
+ "Alloys": {
+  "category": "other",
+  "durability": -1,
+  "name": "Alloys",
+  "rarity": "common",
+  "stack": 50
+ },
+ "AlphaCrusherSkull": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Alpha Crusher Skull",
+  "rarity": "legendary",
+  "stack": 1
+ },
+ "AlphaWardenHeart": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Alpha Crusher Heart",
+  "rarity": "exotic",
+  "stack": 1
+ },
+ "Altered Nickel": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Altered Nickel",
+  "rarity": "uncommon",
+  "stack": 20
+ },
+ "AlteredMeteorCore": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Altered Meteor Core",
+  "rarity": "epic",
+  "stack": 20
+ },
+ "AlteredMeteorFragment": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Altered Meteor Fragment",
+  "rarity": "rare",
+  "stack": 20
+ },
+ "AluminumParts": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Aluminum Scrap",
+  "rarity": "common",
+  "stack": 10
+ },
+ "AnaestheticsContainers": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Medical Supplies",
+  "rarity": "uncommon",
+  "stack": 10
+ },
+ "Antibiotics": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Old Medicine",
+  "rarity": "common",
+  "stack": 10
+ },
+ "Aurum": {
+  "category": "other",
+  "durability": 0,
+  "name": "Aurum",
+  "rarity": "common",
+  "stack": 50
+ },
+ "AutoLoader": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Autoloader",
+  "rarity": "epic",
+  "stack": 10
+ },
+ "Bag_01": {
+  "category": "armor",
+  "durability": -1,
+  "name": "Small Backpack",
+  "rarity": "common",
+  "stack": 1
+ },
+ "Bag_01_broken": {
+  "category": "armor",
+  "durability": -1,
+  "name": "Worn Emergency Bag",
+  "rarity": "common",
+  "stack": 1
+ },
+ "Bag_02": {
+  "category": "armor",
+  "durability": -1,
+  "name": "Medium Backpack",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Bag_03": {
+  "category": "armor",
+  "durability": -1,
+  "name": "Large Backpack",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "Bag_04": {
+  "category": "armor",
+  "durability": -1,
+  "name": "Heavy Duty Backpack",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Bag_05": {
+  "category": "armor",
+  "durability": -1,
+  "name": "Military Backpack",
+  "rarity": "exotic",
+  "stack": 1
+ },
+ "Bag_Altered_01": {
+  "category": "armor",
+  "durability": -1,
+  "name": "Altered Backpack I",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Bag_Altered_02": {
+  "category": "armor",
+  "durability": -1,
+  "name": "Altered Backpack Ii",
+  "rarity": "exotic",
+  "stack": 1
+ },
+ "Bag_Altered_03": {
+  "category": "armor",
+  "durability": -1,
+  "name": "Altered Backpack Iii",
+  "rarity": "legendary",
+  "stack": 1
+ },
+ "BallBearings": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Ball Bearings",
+  "rarity": "uncommon",
+  "stack": 10
+ },
+ "Battery": {
+  "category": "materials",
+  "durability": -1,
+  "name": "\"Fusion Cartridge\" Batteries",
+  "rarity": "common",
+  "stack": 10
+ },
+ "Biomass": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Biomass",
+  "rarity": "epic",
+  "stack": 10
+ },
+ "BlueRunnerEgg": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Blue Runner Egg",
+  "rarity": "rare",
+  "stack": 10
+ },
+ "BlueWood": {
+  "category": "other",
+  "durability": -1,
+  "name": "Blue Wood",
+  "rarity": "common",
+  "stack": 50
+ },
+ "Bombardment": {
+  "category": "other",
+  "durability": -1,
+  "name": "Bombardment",
+  "rarity": "common",
+  "stack": 50
+ },
+ "BrightSands": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Bright Sands",
+  "rarity": "common",
+  "stack": 20
+ },
+ "BrightcapMushroom": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Brightcap Mushroom",
+  "rarity": "uncommon",
+  "stack": 10
+ },
+ "BrittleTitanOre": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Brittle Titan Ore",
+  "rarity": "uncommon",
+  "stack": 10
+ },
+ "Cables": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Cables",
+  "rarity": "common",
+  "stack": 10
+ },
+ "ChargedForgeIronIngot": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Charged Tharis Iron Ingot",
+  "rarity": "exotic",
+  "stack": 6
+ },
+ "CircuitBoard": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Circuit Board",
+  "rarity": "uncommon",
+  "stack": 10
+ },
+ "Cloak": {
+  "category": "other",
+  "durability": -1,
+  "name": "Cloak",
+  "rarity": "common",
+  "stack": 50
+ },
+ "CombatCPU_Blue": {
+  "category": "other",
+  "durability": -1,
+  "name": "Combat CPU Blue",
+  "rarity": "common",
+  "stack": 50
+ },
+ "CombatCPU_red": {
+  "category": "other",
+  "durability": -1,
+  "name": "Combat CPU red",
+  "rarity": "common",
+  "stack": 50
+ },
+ "CommonVeltecite": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Common Veltecite",
+  "rarity": "common",
+  "stack": 10
+ },
+ "CompoundSheets": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Compound Sheets",
+  "rarity": "common",
+  "stack": 10
+ },
+ "ConsumableAudioDecoy_01": {
+  "category": "consumables",
+  "durability": -1,
+  "name": "Audio Decoy",
+  "rarity": "uncommon",
+  "stack": 5
+ },
+ "Consumable_GasGrenade_01": {
+  "category": "consumables",
+  "durability": -1,
+  "name": "Gas Grenade",
+  "rarity": "uncommon",
+  "stack": 4
+ },
+ "Consumable_Health_01": {
+  "category": "consumables",
+  "durability": -1,
+  "name": "Weak Stim",
+  "rarity": "common",
+  "stack": 5
+ },
+ "Consumable_Health_02": {
+  "category": "consumables",
+  "durability": -1,
+  "name": "Weak Medkit",
+  "rarity": "common",
+  "stack": 5
+ },
+ "Consumable_Health_03": {
+  "category": "consumables",
+  "durability": -1,
+  "name": "Strong Medkit",
+  "rarity": "uncommon",
+  "stack": 2
+ },
+ "Consumable_Health_04": {
+  "category": "consumables",
+  "durability": -1,
+  "name": "Combat Stim",
+  "rarity": "rare",
+  "stack": 5
+ },
+ "Consumable_Health_05": {
+  "category": "consumables",
+  "durability": -1,
+  "name": "Strong Stim",
+  "rarity": "uncommon",
+  "stack": 5
+ },
+ "Consumable_Health_06": {
+  "category": "consumables",
+  "durability": -1,
+  "name": "Combat Medkit",
+  "rarity": "rare",
+  "stack": 2
+ },
+ "Consumable_RoadFlare": {
+  "category": "other",
+  "durability": -1,
+  "name": "Consumable Road Flare",
+  "rarity": "common",
+  "stack": 50
+ },
+ "Consumable_Shield_01": {
+  "category": "other",
+  "durability": -1,
+  "name": "Consumable Shield 01",
+  "rarity": "common",
+  "stack": 50
+ },
+ "Consumable_SmokeGrenade_01": {
+  "category": "consumables",
+  "durability": -1,
+  "name": "Smoke Grenade",
+  "rarity": "common",
+  "stack": 4
+ },
+ "Consumable_Stamina_01": {
+  "category": "other",
+  "durability": -1,
+  "name": "Consumable Stamina 01",
+  "rarity": "common",
+  "stack": 50
+ },
+ "CopperWire": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Copper Wire",
+  "rarity": "common",
+  "stack": 10
+ },
+ "Datapad": {
+  "category": "other",
+  "durability": -1,
+  "name": "Datapad",
+  "rarity": "common",
+  "stack": 50
+ },
+ "DerelictExplosives": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Derelict Explosives",
+  "rarity": "uncommon",
+  "stack": 10
+ },
+ "DesertPlant": {
+  "category": "other",
+  "durability": -1,
+  "name": "Desert Plant",
+  "rarity": "common",
+  "stack": 50
+ },
+ "EpicVeltecite": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Epic Veltecite",
+  "rarity": "epic",
+  "stack": 10
+ },
+ "Fabrics": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Textiles",
+  "rarity": "common",
+  "stack": 10
+ },
+ "FocusCrystal": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Focus Crystal",
+  "rarity": "rare",
+  "stack": 10
+ },
+ "ForgeIron": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Tharis Iron Sample",
+  "rarity": "rare",
+  "stack": 10
+ },
+ "ForgeIronIngot": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Tharis Iron",
+  "rarity": "epic",
+  "stack": 6
+ },
+ "GenericCreatureDrop": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Genericcreaturedrop",
+  "rarity": "common",
+  "stack": 10
+ },
+ "GlowingCrystalCoreShard": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Teratomorphic Crystal Core",
+  "rarity": "uncommon",
+  "stack": 10
+ },
+ "Gyroscope": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Gyroscope",
+  "rarity": "epic",
+  "stack": 10
+ },
+ "HardDrive_common": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Common Harddrive",
+  "rarity": "common",
+  "stack": 1
+ },
+ "HardDrive_epic": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Epic Harddrive",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "HardDrive_legendary": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Legendary Harddrive",
+  "rarity": "legendary",
+  "stack": 1
+ },
+ "HardDrive_rare": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Rare Harddrive",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "HardDrive_uncommon": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Uncommon Harddrive",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "HardenedBoneAlloy": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Hardened Bone Plate",
+  "rarity": "uncommon",
+  "stack": 10
+ },
+ "HardenedMetals": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Hardened Metals",
+  "rarity": "epic",
+  "stack": 20
+ },
+ "HealingWard": {
+  "category": "other",
+  "durability": -1,
+  "name": "Healing Ward",
+  "rarity": "common",
+  "stack": 50
+ },
+ "Heavy": {
+  "category": "ammo",
+  "durability": -1,
+  "name": "Heavy Ammo",
+  "rarity": "uncommon",
+  "stack": 50
+ },
+ "Heavy_03": {
+  "category": "other",
+  "durability": -1,
+  "name": "Heavy 03",
+  "rarity": "common",
+  "stack": 50
+ },
+ "Heavy_05": {
+  "category": "other",
+  "durability": -1,
+  "name": "Heavy 05",
+  "rarity": "common",
+  "stack": 50
+ },
+ "Helmet_01": {
+  "category": "armor",
+  "durability": 500,
+  "name": "Helmet",
+  "rarity": "common",
+  "stack": 1
+ },
+ "Helmet_02": {
+  "category": "armor",
+  "durability": 600,
+  "name": "Helmet",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Helmet_03": {
+  "category": "armor",
+  "durability": 700,
+  "name": "Helmet",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "Helmet_04": {
+  "category": "armor",
+  "durability": 800,
+  "name": "Helmet",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Helmet_05": {
+  "category": "armor",
+  "durability": 900,
+  "name": "Helmet",
+  "rarity": "exotic",
+  "stack": 1
+ },
+ "Helmet_Altered_01": {
+  "category": "armor",
+  "durability": 800,
+  "name": "Altered Helmet I",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Helmet_Altered_02": {
+  "category": "armor",
+  "durability": 900,
+  "name": "Altered Helmet Ii",
+  "rarity": "exotic",
+  "stack": 1
+ },
+ "Helmet_Altered_03": {
+  "category": "armor",
+  "durability": 1000,
+  "name": "Altered Helmet Iii",
+  "rarity": "legendary",
+  "stack": 1
+ },
+ "Helmet_NV_01": {
+  "category": "armor",
+  "durability": 1000,
+  "name": "NV Helmet",
+  "rarity": "legendary",
+  "stack": 1
+ },
+ "Helmet_Restoration_01": {
+  "category": "armor",
+  "durability": 600,
+  "name": "Restoration Helmet",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Helmet_Restoration_02": {
+  "category": "armor",
+  "durability": 700,
+  "name": "Restoration Helmet",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "Helmet_Restoration_03": {
+  "category": "armor",
+  "durability": 800,
+  "name": "Restoration Helmet",
+  "rarity": "exotic",
+  "stack": 1
+ },
+ "Helmet_Restoration_04": {
+  "category": "armor",
+  "durability": 900,
+  "name": "Restoration Helmet",
+  "rarity": "exotic",
+  "stack": 1
+ },
+ "Helmet_Tactical_01": {
+  "category": "armor",
+  "durability": 500,
+  "name": "Tactical Helmet",
+  "rarity": "common",
+  "stack": 1
+ },
+ "Helmet_Tactical_02": {
+  "category": "armor",
+  "durability": 600,
+  "name": "Tactical Helmet",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Helmet_Tactical_03": {
+  "category": "armor",
+  "durability": 700,
+  "name": "Tactical Helmet",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "Helmet_Tactical_04": {
+  "category": "armor",
+  "durability": 800,
+  "name": "Tactical Helmet",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Helmet_Tactical_05": {
+  "category": "armor",
+  "durability": 900,
+  "name": "Tactical Helmet",
+  "rarity": "exotic",
+  "stack": 1
+ },
+ "HydraulicPiston": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Hydraulic Piston",
+  "rarity": "uncommon",
+  "stack": 10
+ },
+ "ICAScrip": {
+  "category": "materials",
+  "durability": -1,
+  "name": "ICA Scrip",
+  "rarity": "uncommon",
+  "stack": 10000
+ },
+ "Insulation": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Salvaged Insulation",
+  "rarity": "common",
+  "stack": 10
+ },
+ "InsuranceCredits": {
+  "category": "other",
+  "durability": 0,
+  "name": "Insurance Credits",
+  "rarity": "common",
+  "stack": 50
+ },
+ "IvyPlant": {
+  "category": "other",
+  "durability": -1,
+  "name": "Ivy Plant",
+  "rarity": "common",
+  "stack": 50
+ },
+ "Jewellery": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Jewellery",
+  "rarity": "rare",
+  "stack": 10
+ },
+ "KMarks": {
+  "category": "other",
+  "durability": 0,
+  "name": "KMarks",
+  "rarity": "common",
+  "stack": 50
+ },
+ "KineticShieldDome": {
+  "category": "consumables",
+  "durability": -1,
+  "name": "Leafman Shield Dome",
+  "rarity": "epic",
+  "stack": 3
+ },
+ "KorolevScrip": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Korolev Scrip",
+  "rarity": "uncommon",
+  "stack": 10000
+ },
+ "Letium": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Letium",
+  "rarity": "epic",
+  "stack": 10
+ },
+ "Light": {
+  "category": "ammo",
+  "durability": -1,
+  "name": "Light Ammo",
+  "rarity": "common",
+  "stack": 250
+ },
+ "Light_03": {
+  "category": "other",
+  "durability": -1,
+  "name": "Light 03",
+  "rarity": "common",
+  "stack": 50
+ },
+ "Light_04": {
+  "category": "other",
+  "durability": -1,
+  "name": "Light 04",
+  "rarity": "common",
+  "stack": 50
+ },
+ "LiquidFertilizer": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Liquid Fertilizer",
+  "rarity": "uncommon",
+  "stack": 10
+ },
+ "MagneticFieldStabilizer": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Magnetic Field Stabilizer",
+  "rarity": "uncommon",
+  "stack": 10
+ },
+ "Map01_KeyCard_01": {
+  "category": "materials",
+  "durability": 15,
+  "name": "Bright Sands Keycard 01",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Map01_KeyCard_02": {
+  "category": "materials",
+  "durability": 8,
+  "name": "Bright Sands Keycard 02",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Map01_KeyCard_03": {
+  "category": "materials",
+  "durability": 15,
+  "name": "Bright Sands Keycard 03",
+  "rarity": "common",
+  "stack": 1
+ },
+ "Map01_KeyCard_04": {
+  "category": "materials",
+  "durability": 10,
+  "name": "Bright Sands Keycard 04",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Map01_KeyCard_05": {
+  "category": "materials",
+  "durability": 8,
+  "name": "Bright Sands Keycard 05",
+  "rarity": "common",
+  "stack": 1
+ },
+ "Map01_KeyCard_06": {
+  "category": "materials",
+  "durability": 12,
+  "name": "Bright Sands Keycard 06",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "Map01_KeyCard_07": {
+  "category": "materials",
+  "durability": 5,
+  "name": "Bright Sands Keycard 07",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "Map01_KeyCard_08": {
+  "category": "materials",
+  "durability": 15,
+  "name": "Bright Sands Keycard 08",
+  "rarity": "legendary",
+  "stack": 20
+ },
+ "Map02_KeyCard_01": {
+  "category": "materials",
+  "durability": 5,
+  "name": "Crescent Falls Keycard 01",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Map02_KeyCard_02": {
+  "category": "materials",
+  "durability": 20,
+  "name": "Crescent Falls Keycard 02",
+  "rarity": "common",
+  "stack": 1
+ },
+ "Map02_KeyCard_03": {
+  "category": "materials",
+  "durability": 8,
+  "name": "Crescent Falls Keycard 03",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "Map02_KeyCard_04": {
+  "category": "materials",
+  "durability": 10,
+  "name": "Crescent Falls Keycard 04",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Map02_KeyCard_05": {
+  "category": "materials",
+  "durability": 15,
+  "name": "Crescent Falls Keycard 05",
+  "rarity": "common",
+  "stack": 1
+ },
+ "Map02_KeyCard_06": {
+  "category": "materials",
+  "durability": 5,
+  "name": "Crescent Falls Keycard 06",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Map02_KeyCard_07": {
+  "category": "materials",
+  "durability": 10,
+  "name": "Crescent Falls Keycard 07",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Map02_KeyCard_08": {
+  "category": "materials",
+  "durability": 5,
+  "name": "Crescent Falls Keycard 08",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Map02_KeyCard_09": {
+  "category": "materials",
+  "durability": 5,
+  "name": "Crescent Falls Keycard 09",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Map03_KeyCard_01": {
+  "category": "materials",
+  "durability": 8,
+  "name": "Tharis Island Keycard 01",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Map03_KeyCard_02": {
+  "category": "materials",
+  "durability": 5,
+  "name": "Tharis Island Keycard 02",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Map03_KeyCard_03": {
+  "category": "materials",
+  "durability": 5,
+  "name": "Tharis Island Keycard 03",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Map03_KeyCard_04": {
+  "category": "materials",
+  "durability": 15,
+  "name": "Tharis Island Keycard 04",
+  "rarity": "rare",
+  "stack": 20
+ },
+ "Map03_KeyCard_05": {
+  "category": "materials",
+  "durability": 15,
+  "name": "Tharis Island Keycard 05",
+  "rarity": "rare",
+  "stack": 20
+ },
+ "Map03_KeyCard_06": {
+  "category": "materials",
+  "durability": 15,
+  "name": "Tharis Island Keycard 06",
+  "rarity": "epic",
+  "stack": 20
+ },
+ "Map03_KeyCard_07": {
+  "category": "materials",
+  "durability": 15,
+  "name": "Tharis Island Keycard 07",
+  "rarity": "epic",
+  "stack": 20
+ },
+ "Map03_KeyCard_08": {
+  "category": "materials",
+  "durability": 15,
+  "name": "Tharis Island Keycard 08",
+  "rarity": "legendary",
+  "stack": 20
+ },
+ "Medium": {
+  "category": "ammo",
+  "durability": -1,
+  "name": "Medium Ammo",
+  "rarity": "common",
+  "stack": 250
+ },
+ "Medium_03": {
+  "category": "other",
+  "durability": -1,
+  "name": "Medium 03",
+  "rarity": "common",
+  "stack": 50
+ },
+ "Medium_04": {
+  "category": "other",
+  "durability": -1,
+  "name": "Medium 04",
+  "rarity": "common",
+  "stack": 50
+ },
+ "MetallicAlloys": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Metallic Alloys",
+  "rarity": "rare",
+  "stack": 20
+ },
+ "MeteorCore": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Meteor Core",
+  "rarity": "epic",
+  "stack": 3
+ },
+ "MeteorFragment": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Meteor Fragment",
+  "rarity": "rare",
+  "stack": 10
+ },
+ "MiniatureReactor": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Miniaturereactor",
+  "rarity": "rare",
+  "stack": 10
+ },
+ "Mod_Converter_Heavy_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Heavy Converter",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Mod_Converter_Heavy_02": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Heavy Converter",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "Mod_Converter_Heavy_03": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Heavy Converter",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Mod_Converter_Light_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Light Converter",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Mod_Converter_Light_02": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Light Converter",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "Mod_Converter_Light_03": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Light Converter",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Mod_Converter_Light_AIDMG_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Light Creature DMG",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Mod_Converter_Light_AIDMG_02": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Light Creature DMG",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "Mod_Converter_Light_AIDMG_03": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Light Creature DMG",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Mod_Converter_Medium_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Medium Converter",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Mod_Converter_Medium_02": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Medium Converter",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "Mod_Converter_Medium_03": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Medium Converter",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Mod_Converter_Medium_AIDMG_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Medium Creature DMG",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Mod_Converter_Medium_AIDMG_02": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Medium Creature DMG",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "Mod_Converter_Medium_AIDMG_03": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Medium Creature DMG",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Mod_Converter_Shotgun_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Shotgun Converter",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Mod_Converter_Shotgun_02": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Shotgun Converter",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "Mod_Converter_Shotgun_03": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Shotgun Converter",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Mod_Converter_Shotgun_Slug_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Shotgun Slugs",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Mod_ForeGrip_ADS_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Tactical Foregrip",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Mod_ForeGrip_ADS_02": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Tactical Foregrip",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "Mod_ForeGrip_ADS_03": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Tactical Foregrip",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Mod_ForeGrip_Angled_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Angled Foregrip",
+  "rarity": "common",
+  "stack": 1
+ },
+ "Mod_ForeGrip_Angled_02": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Angled Foregrip",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Mod_ForeGrip_Equip_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Quickdraw Foregrip",
+  "rarity": "common",
+  "stack": 1
+ },
+ "Mod_ForeGrip_Equip_02": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Quickdraw Foregrip",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Mod_Korolev_Scanner_AlienCrystals": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Focus Crystal Scanning Module",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "Mod_Korolev_Scanner_HeavyMetals": {
+  "category": "other",
+  "durability": -1,
+  "name": "Mod Korolev Scanner Heavy Metals",
+  "rarity": "common",
+  "stack": 50
+ },
+ "Mod_Korolev_Scanner_Oil": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Crude Oil Scanning Module",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Mod_Korolev_Scanner_Veltecite": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Veltecite Scanning Module",
+  "rarity": "common",
+  "stack": 1
+ },
+ "Mod_MagazineMedium_Reloadspeed_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Medium Quickdraw",
+  "rarity": "common",
+  "stack": 1
+ },
+ "Mod_Magazine_Heavy_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Heavy Extended",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Mod_Magazine_Heavy_02": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Heavy Extended",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "Mod_Magazine_Heavy_03": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Heavy Extended",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Mod_Magazine_Heavy_ReloadSpeed_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Heavy Quickdraw",
+  "rarity": "common",
+  "stack": 1
+ },
+ "Mod_Magazine_Heavy_ReloadSpeed_02": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Heavy Quickdraw",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Mod_Magazine_Heavy_ReloadSpeed_03": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Heavy Quickdraw",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "Mod_Magazine_Heavy_ReloadSpeed_04": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Heavy Quickdraw",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Mod_Magazine_Light_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Light Extended",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Mod_Magazine_Light_02": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Light Extended",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "Mod_Magazine_Light_03": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Light Extended",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Mod_Magazine_Light_EXTReload_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Light Extended Quickdraw",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "Mod_Magazine_Light_EXTReload_02": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Light Extended Quickdraw",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Mod_Magazine_Light_ReloadSpeed_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Light Quickdraw",
+  "rarity": "common",
+  "stack": 1
+ },
+ "Mod_Magazine_Light_ReloadSpeed_02": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Light Quickdraw",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Mod_Magazine_Light_ReloadSpeed_03": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Light Quickdraw",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "Mod_Magazine_Light_ReloadSpeed_04": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Light Quickdraw",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Mod_Magazine_Medium_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Medium Extended",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Mod_Magazine_Medium_02": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Medium Extended",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "Mod_Magazine_Medium_03": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Medium Extended",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Mod_Magazine_Medium_EXTReload_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Medium Extended Quickdraw",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "Mod_Magazine_Medium_Reloadspeed_02": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Medium Quickdraw",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Mod_Magazine_Medium_Reloadspeed_03": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Medium Quickdraw",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "Mod_Magazine_Medium_Reloadspeed_04": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Medium Quickdraw",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Mod_Magazine_Shotgun_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Shotgun Extended",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Mod_Magazine_Shotgun_02": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Shotgun Extended",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "Mod_Magazine_Shotgun_03": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Shotgun Extended",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Mod_Magazine_Shotgun_ReloadSpeed_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Shotgun Quickdraw",
+  "rarity": "common",
+  "stack": 1
+ },
+ "Mod_Magazine_Shotgun_ReloadSpeed_02": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Shotgun Quickdraw",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Mod_Magazine_Shotgun_ReloadSpeed_03": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Shotgun Quickdraw",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "Mod_Magazine_Shotgun_ReloadSpeed_04": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Shotgun Quickdraw",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Mod_Muzzle_Small_Recoil_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Small Muzzle Break",
+  "rarity": "common",
+  "stack": 1
+ },
+ "Mod_Muzzle_Small_Recoil_02": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Small Muzzle Break",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Mod_Muzzle_Small_Recoil_03": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Small Muzzle Break",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "Mod_Muzzle_Small_Supressor_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Small Supressor",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "Mod_Muzzle_Standard_Recoil_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Medium Muzzle Break",
+  "rarity": "common",
+  "stack": 1
+ },
+ "Mod_Muzzle_Standard_Recoil_02": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Medium Muzzle Break",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Mod_Muzzle_Standard_Recoil_03": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Medium Muzzle Break",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "Mod_Muzzle_Standard_Supressor_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Medium Supressor",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "Mod_Optic_1x_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Red Dot Sight",
+  "rarity": "common",
+  "stack": 1
+ },
+ "Mod_Optic_1x_02": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Holographic Sight",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Mod_Optic_2x_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "2x Optic",
+  "rarity": "common",
+  "stack": 1
+ },
+ "Mod_Optic_4x_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "4x Optic",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "Mod_Optic_6x_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "6x Optic",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Mod_Optic_8x_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "8x Optic",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Mod_Optic_Variable_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "2-4x Variable Optic",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Mod_RearGrip_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Ergonomic Grip",
+  "rarity": "common",
+  "stack": 1
+ },
+ "Mod_RearGrip_02": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Ergonomic Grip",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Mod_RearGrip_ADS_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Tactical Rear Grip",
+  "rarity": "common",
+  "stack": 1
+ },
+ "Mod_RearGrip_ADS_02": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Tactical Rear Grip",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Mod_Stock_Marksman_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Marksman Stock",
+  "rarity": "common",
+  "stack": 1
+ },
+ "Mod_Stock_Marksman_02": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Marksman Stock",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Mod_Stock_Marksman_ADSEquip_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "MKM Ultralight Stock",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "Mod_Stock_Marksman_ADSEquip_02": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "MKM Ultralight Stock",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Mod_Stock_Marksman_ADS_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "MKM Tactical Stock",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Mod_Stock_Marksman_ADS_02": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "MKM Tactical Stock",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "Mod_Stock_Marksman_Equip_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "MKM Quickdraw Stock",
+  "rarity": "common",
+  "stack": 1
+ },
+ "Mod_Stock_Marksman_Equip_02": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "MKM Quickdraw Stock",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Mod_Stock_Standard_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Standard Stock",
+  "rarity": "common",
+  "stack": 1
+ },
+ "Mod_Stock_Standard_02": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Standard Stock",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Mod_Stock_Standard_ADSEquip_02": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Ultralight Stock",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Mod_Stock_Standard_ADS_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Tactical Stock",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Mod_Stock_Standard_ADS_02": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Tactical Stock",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "Mod_Stock_Standard_Equip_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Quickdraw Stock",
+  "rarity": "common",
+  "stack": 1
+ },
+ "Mod_Stock_Standard_Equip_02": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Quickdraw Stock",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Mod_Tactical_Flashlight_01": {
+  "category": "attachments",
+  "durability": -1,
+  "name": "Tactical Light",
+  "rarity": "common",
+  "stack": 1
+ },
+ "Mod__Stock_Standard_ADSEquip_01": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Mod Stock Standard Adsequip 01",
+  "rarity": "common",
+  "stack": 20
+ },
+ "MultiTool": {
+  "category": "other",
+  "durability": -1,
+  "name": "Multi Tool",
+  "rarity": "common",
+  "stack": 50
+ },
+ "NeuroToxicGlands": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Neurotoxicglands",
+  "rarity": "common",
+  "stack": 10
+ },
+ "Nickel": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Nickel",
+  "rarity": "common",
+  "stack": 10
+ },
+ "OTecStim_Adrenaline": {
+  "category": "consumables",
+  "durability": -1,
+  "name": "Adrenaline Stim",
+  "rarity": "rare",
+  "stack": 5
+ },
+ "Oil": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Oil",
+  "rarity": "common",
+  "stack": 20
+ },
+ "OilTank": {
+  "category": "materials",
+  "durability": -1,
+  "name": "NiC Oil Canister",
+  "rarity": "epic",
+  "stack": 10
+ },
+ "OldCurrency": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Oldcurrency",
+  "rarity": "common",
+  "stack": 10000
+ },
+ "OpticGlass": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Optic Glass",
+  "rarity": "uncommon",
+  "stack": 10
+ },
+ "OsirisCredits": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Osiris Credits",
+  "rarity": "common",
+  "stack": 10000
+ },
+ "OsirisScrip": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Osiris Scrip",
+  "rarity": "uncommon",
+  "stack": 10000
+ },
+ "PolariumCrystal": {
+  "category": "other",
+  "durability": -1,
+  "name": "Polarium Crystal",
+  "rarity": "common",
+  "stack": 50
+ },
+ "Polonium": {
+  "category": "other",
+  "durability": -1,
+  "name": "Polonium",
+  "rarity": "common",
+  "stack": 50
+ },
+ "Polymetallic": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Polymetallic Prefabricate",
+  "rarity": "uncommon",
+  "stack": 20
+ },
+ "PolymetallicPrefabricate": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Polymetallic Prefabricate",
+  "rarity": "common",
+  "stack": 10
+ },
+ "PortableLabEquipmentBox": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Portable Lab",
+  "rarity": "epic",
+  "stack": 10
+ },
+ "PrintResin": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Print Resin",
+  "rarity": "uncommon",
+  "stack": 10
+ },
+ "ProteinBar": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Protein Bar",
+  "rarity": "common",
+  "stack": 10
+ },
+ "PureFocusCrystal": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Pure Focus Crystal",
+  "rarity": "epic",
+  "stack": 10
+ },
+ "PureForgeIron": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Pure Tharis Iron",
+  "rarity": "epic",
+  "stack": 10
+ },
+ "PureNickel": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Altered Nickel",
+  "rarity": "uncommon",
+  "stack": 10
+ },
+ "QuestItem_LaserDrillBeacon": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Laser Drill Beacon",
+  "rarity": "epic",
+  "stack": 3
+ },
+ "QuestItem_OilPumpBeacon": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Oil Pump Beacon",
+  "rarity": "epic",
+  "stack": 3
+ },
+ "QuestItem_OrbitalCanonTargetBeacon": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Orbital Cannon Beacon",
+  "rarity": "epic",
+  "stack": 3
+ },
+ "RadioSpareParts": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Radio Equipment",
+  "rarity": "uncommon",
+  "stack": 10
+ },
+ "RadioactiveBrightcapMushroom": {
+  "category": "other",
+  "durability": -1,
+  "name": "Radioactive Brightcap Mushroom",
+  "rarity": "common",
+  "stack": 50
+ },
+ "RareVeltecite": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Rare Veltecite",
+  "rarity": "rare",
+  "stack": 10
+ },
+ "SampleContainer": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Sample Container",
+  "rarity": "rare",
+  "stack": 10
+ },
+ "SamplingDevice": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Biological Sampler",
+  "rarity": "rare",
+  "stack": 10
+ },
+ "ShardSlicer": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Shard Slicer",
+  "rarity": "rare",
+  "stack": 10
+ },
+ "Shiel_dTactical_04": {
+  "category": "other",
+  "durability": -1,
+  "name": "Shiel d Tactical 04",
+  "rarity": "common",
+  "stack": 50
+ },
+ "ShieldRestoration04": {
+  "category": "armor",
+  "durability": 1100,
+  "name": "Restoration Shield",
+  "rarity": "legendary",
+  "stack": 1
+ },
+ "Shield_01": {
+  "category": "armor",
+  "durability": 500,
+  "name": "Shield",
+  "rarity": "common",
+  "stack": 1
+ },
+ "Shield_02": {
+  "category": "armor",
+  "durability": 600,
+  "name": "Shield",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Shield_03": {
+  "category": "armor",
+  "durability": 700,
+  "name": "Shield",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "Shield_04": {
+  "category": "armor",
+  "durability": 800,
+  "name": "Shield",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Shield_05": {
+  "category": "armor",
+  "durability": 900,
+  "name": "Shield",
+  "rarity": "exotic",
+  "stack": 1
+ },
+ "Shield_Altered_01": {
+  "category": "armor",
+  "durability": 800,
+  "name": "Altered Shield I",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Shield_Altered_02": {
+  "category": "armor",
+  "durability": 900,
+  "name": "Altered Shield Ii",
+  "rarity": "exotic",
+  "stack": 1
+ },
+ "Shield_Altered_03": {
+  "category": "armor",
+  "durability": 1000,
+  "name": "Altered Shield Iii",
+  "rarity": "legendary",
+  "stack": 1
+ },
+ "Shield_Restoration_01": {
+  "category": "armor",
+  "durability": 600,
+  "name": "Restoration Shield",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Shield_Restoration_02": {
+  "category": "armor",
+  "durability": 700,
+  "name": "Restoration Shield",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "Shield_Restoration_03": {
+  "category": "armor",
+  "durability": 800,
+  "name": "Restoration Shield",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Shield_Tactical_01": {
+  "category": "other",
+  "durability": -1,
+  "name": "Shield Tactical 01",
+  "rarity": "common",
+  "stack": 50
+ },
+ "Shield_Tactical_02": {
+  "category": "other",
+  "durability": -1,
+  "name": "Shield Tactical 02",
+  "rarity": "common",
+  "stack": 50
+ },
+ "Shield_Tactical_03": {
+  "category": "other",
+  "durability": -1,
+  "name": "Shield Tactical 03",
+  "rarity": "common",
+  "stack": 50
+ },
+ "Shield_Tactical_05": {
+  "category": "other",
+  "durability": -1,
+  "name": "Shield Tactical 05",
+  "rarity": "common",
+  "stack": 50
+ },
+ "ShockAbsorber": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Shock Absorber",
+  "rarity": "epic",
+  "stack": 10
+ },
+ "ShockGrenade_01": {
+  "category": "consumables",
+  "durability": -1,
+  "name": "Weak Grenade",
+  "rarity": "common",
+  "stack": 4
+ },
+ "ShockGrenade_02": {
+  "category": "consumables",
+  "durability": -1,
+  "name": "Light Grenade",
+  "rarity": "uncommon",
+  "stack": 4
+ },
+ "ShockGrenade_03": {
+  "category": "consumables",
+  "durability": -1,
+  "name": "Standard Grenade",
+  "rarity": "rare",
+  "stack": 4
+ },
+ "ShockGrenade_04": {
+  "category": "consumables",
+  "durability": -1,
+  "name": "Heavy Grenade",
+  "rarity": "epic",
+  "stack": 4
+ },
+ "ShockGrenade_05": {
+  "category": "other",
+  "durability": -1,
+  "name": "Shock Grenade 05",
+  "rarity": "common",
+  "stack": 50
+ },
+ "Shotgun": {
+  "category": "ammo",
+  "durability": -1,
+  "name": "Shotgun Ammo",
+  "rarity": "uncommon",
+  "stack": 50
+ },
+ "SmartMesh": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Smart Mesh",
+  "rarity": "rare",
+  "stack": 10
+ },
+ "SpareCasing": {
+  "category": "other",
+  "durability": -1,
+  "name": "Spare Casing",
+  "rarity": "common",
+  "stack": 50
+ },
+ "Special": {
+  "category": "ammo",
+  "durability": -1,
+  "name": "Special Ammo",
+  "rarity": "rare",
+  "stack": 50
+ },
+ "Special_06_2": {
+  "category": "other",
+  "durability": -1,
+  "name": "Special 06 2",
+  "rarity": "common",
+  "stack": 50
+ },
+ "StormSurgeCrystal": {
+  "category": "other",
+  "durability": -1,
+  "name": "Storm Surge Crystal",
+  "rarity": "common",
+  "stack": 50
+ },
+ "StormyCreatureDrop": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Stormycreaturedrop",
+  "rarity": "common",
+  "stack": 10
+ },
+ "SuperChargedForgeIronIngot": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Super Charged Tharis Iron Ingot",
+  "rarity": "legendary",
+  "stack": 6
+ },
+ "TOOL_Binocular_Basic_01": {
+  "category": "tools",
+  "durability": -1,
+  "name": "Binoculars",
+  "rarity": "common",
+  "stack": 50
+ },
+ "TOOL_Flashlight_01": {
+  "category": "tools",
+  "durability": -1,
+  "name": "Flashlight",
+  "rarity": "common",
+  "stack": 50
+ },
+ "TOOL_MineralScanner_01": {
+  "category": "tools",
+  "durability": -1,
+  "name": "Mineral Scanner",
+  "rarity": "common",
+  "stack": 50
+ },
+ "TOOL_Mining_01": {
+  "category": "tools",
+  "durability": -1,
+  "name": "Heavy Mining Tool",
+  "rarity": "common",
+  "stack": 50
+ },
+ "TentaclePlant": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Spine Briar",
+  "rarity": "rare",
+  "stack": 10
+ },
+ "TitanOre": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Titan Ore",
+  "rarity": "rare",
+  "stack": 10
+ },
+ "UncommonVelticite": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Flawed Veltecite",
+  "rarity": "uncommon",
+  "stack": 10
+ },
+ "VelteciteHeart": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Veltecite Heart",
+  "rarity": "legendary",
+  "stack": 3
+ },
+ "Vest_01": {
+  "category": "armor",
+  "durability": 400,
+  "name": "Basic Vest",
+  "rarity": "common",
+  "stack": 1
+ },
+ "Vest_02": {
+  "category": "armor",
+  "durability": 600,
+  "name": "Standard Vest",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Vest_03": {
+  "category": "armor",
+  "durability": 800,
+  "name": "Combat Vest",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "Vest_04": {
+  "category": "armor",
+  "durability": 1000,
+  "name": "Enhanced Vest",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Vest_05": {
+  "category": "armor",
+  "durability": 1200,
+  "name": "Superior Vest",
+  "rarity": "legendary",
+  "stack": 1
+ },
+ "Vest_Tactical_01": {
+  "category": "armor",
+  "durability": 650,
+  "name": "Tactical Vest I",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "Vest_Tactical_02": {
+  "category": "armor",
+  "durability": 750,
+  "name": "Tactical Vest Ii",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "Vest_Tactical_03": {
+  "category": "armor",
+  "durability": 900,
+  "name": "Tactical Vest Iii",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Vest_Tactical_04": {
+  "category": "armor",
+  "durability": 1100,
+  "name": "Tactical Vest Iv",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "Vest_Tactical_05": {
+  "category": "armor",
+  "durability": 1300,
+  "name": "Tactical Vest V",
+  "rarity": "legendary",
+  "stack": 1
+ },
+ "WP_A_AR_Bullet_01": {
+  "category": "weapons",
+  "durability": -1,
+  "name": "KOR-47",
+  "rarity": "exotic",
+  "stack": 1
+ },
+ "WP_A_BR_Bullet_01": {
+  "category": "weapons",
+  "durability": -1,
+  "name": "KBR Longshot",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "WP_A_HVY_Shell_01": {
+  "category": "weapons",
+  "durability": -1,
+  "name": "Karla",
+  "rarity": "exotic",
+  "stack": 1
+ },
+ "WP_A_Launch_MSL_01": {
+  "category": "weapons",
+  "durability": -1,
+  "name": "Komrad",
+  "rarity": "legendary",
+  "stack": 1
+ },
+ "WP_A_Pistol_Bullet_01": {
+  "category": "weapons",
+  "durability": -1,
+  "name": "Hammer",
+  "rarity": "exotic",
+  "stack": 1
+ },
+ "WP_A_SGun_Energy_01": {
+  "category": "weapons",
+  "durability": -1,
+  "name": "PKR Maelstrom",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "WP_A_SMG_Shard_01": {
+  "category": "weapons",
+  "durability": -1,
+  "name": "KM-9 Scrapper",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "WP_A_Sniper_Gauss_01": {
+  "category": "weapons",
+  "durability": -1,
+  "name": "Karma-1",
+  "rarity": "legendary",
+  "stack": 1
+ },
+ "WP_D_AR_Bullet_01": {
+  "category": "weapons",
+  "durability": -1,
+  "name": "Advocate",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "WP_D_BR_Shard_01": {
+  "category": "weapons",
+  "durability": -1,
+  "name": "Lacerator",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "WP_D_HVY_Exotic_01": {
+  "category": "weapons",
+  "durability": -1,
+  "name": "Haze",
+  "rarity": "exotic",
+  "stack": 1
+ },
+ "WP_D_LMG_Energy_01": {
+  "category": "weapons",
+  "durability": -1,
+  "name": "ICA Guarantee",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "WP_D_Pistol_Bullet_01": {
+  "category": "weapons",
+  "durability": -1,
+  "name": "Bulldog Pistol",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "WP_D_SGun_Shard_01": {
+  "category": "weapons",
+  "durability": -1,
+  "name": "Shattergun",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "WP_D_SMG_Energy_01": {
+  "category": "weapons",
+  "durability": -1,
+  "name": "Voltaic Brute",
+  "rarity": "exotic",
+  "stack": 1
+ },
+ "WP_D_Sniper_Gauss_01": {
+  "category": "weapons",
+  "durability": -1,
+  "name": "Kinetic Arbiter",
+  "rarity": "exotic",
+  "stack": 1
+ },
+ "WP_E_AR_Energy_01": {
+  "category": "weapons",
+  "durability": -1,
+  "name": "AR-55 Autorifle",
+  "rarity": "common",
+  "stack": 1
+ },
+ "WP_E_AR_Energy_01_scrappy": {
+  "category": "weapons",
+  "durability": -1,
+  "name": "Rusty AR-55",
+  "rarity": "common",
+  "stack": 1
+ },
+ "WP_E_Launch_Nade_01": {
+  "category": "other",
+  "durability": -1,
+  "name": "WP E Launch Nade 01",
+  "rarity": "common",
+  "stack": 1
+ },
+ "WP_E_Pistol_Bullet_01": {
+  "category": "weapons",
+  "durability": -1,
+  "name": "K-28",
+  "rarity": "common",
+  "stack": 1
+ },
+ "WP_E_Pistol_Bullet_01_scrappy": {
+  "category": "weapons",
+  "durability": -1,
+  "name": "Rusty K-28",
+  "rarity": "common",
+  "stack": 1
+ },
+ "WP_E_SGun_Bullet_01": {
+  "category": "weapons",
+  "durability": -1,
+  "name": "B9 Trenchgun",
+  "rarity": "common",
+  "stack": 1
+ },
+ "WP_E_SGun_Bullet_01_scrappy": {
+  "category": "weapons",
+  "durability": -1,
+  "name": "Rusty Trenchgun",
+  "rarity": "common",
+  "stack": 1
+ },
+ "WP_E_SMG_Bullet_01": {
+  "category": "weapons",
+  "durability": -1,
+  "name": "S-576 PDW",
+  "rarity": "common",
+  "stack": 1
+ },
+ "WP_E_SMG_Bullet_01_scrappy": {
+  "category": "weapons",
+  "durability": -1,
+  "name": "Rusty PDW",
+  "rarity": "common",
+  "stack": 1
+ },
+ "WP_E_Sniper_Bullet_01": {
+  "category": "weapons",
+  "durability": -1,
+  "name": "C-32 Bolt Action",
+  "rarity": "common",
+  "stack": 1
+ },
+ "WP_G_AR_Beam_01": {
+  "category": "weapons",
+  "durability": -1,
+  "name": "Gorgon",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "WP_G_AR_Energy_01": {
+  "category": "weapons",
+  "durability": -1,
+  "name": "Phasic Lancer",
+  "rarity": "rare",
+  "stack": 1
+ },
+ "WP_G_AR_Needle_01": {
+  "category": "weapons",
+  "durability": -1,
+  "name": "Manticore",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "WP_G_HVY_Beam_01": {
+  "category": "weapons",
+  "durability": -1,
+  "name": "Zeus Beam",
+  "rarity": "legendary",
+  "stack": 1
+ },
+ "WP_G_Pistol_Energy_01": {
+  "category": "weapons",
+  "durability": -1,
+  "name": "Scarab",
+  "rarity": "uncommon",
+  "stack": 1
+ },
+ "WP_G_SMG_Needle_01": {
+  "category": "weapons",
+  "durability": -1,
+  "name": "Asp Flechette Gun",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "WP_G_Sniper_Energy_01": {
+  "category": "weapons",
+  "durability": -1,
+  "name": "Basilisk",
+  "rarity": "exotic",
+  "stack": 1
+ },
+ "WP_Legendary_Sniper_Energy_01": {
+  "category": "weapons",
+  "durability": 1400,
+  "name": "Phasic Lancer",
+  "rarity": "epic",
+  "stack": 1
+ },
+ "WaterPlant": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Waterweed Filament",
+  "rarity": "uncommon",
+  "stack": 10
+ },
+ "ZeroSystems": {
+  "category": "materials",
+  "durability": -1,
+  "name": "Zero Systems CPU",
+  "rarity": "rare",
+  "stack": 20
+ }
+}

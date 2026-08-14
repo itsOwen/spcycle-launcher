@@ -6,10 +6,17 @@ FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 ENV CARGO_TERM_COLOR=always
 
+# the gstreamer packages are for the backdrop: webkit plays html5 video through it,
+# and linuxdeploy can only bundle plugins that are installed here. a bundle with the
+# core and no plugins leaves webkit holding a null autoaudiosink, and the web process
+# dies on it — a grey window with the launcher still running behind it.
 RUN apt-get update && apt-get install -y --no-install-recommends \
       build-essential curl wget file ca-certificates git pkg-config python3 \
       libwebkit2gtk-4.1-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev \
       libxdo-dev libasound2-dev libdbus-1-dev \
+      libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
+      gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad \
+      gstreamer1.0-libav gstreamer1.0-alsa gstreamer1.0-pulseaudio \
       patchelf desktop-file-utils zsync xz-utils zstd fuse3 libfuse2 \
       xdg-utils shared-mime-info libgtk-3-bin \
     && rm -rf /var/lib/apt/lists/*
@@ -29,6 +36,7 @@ RUN mkdir -p /root/.cache/tauri && cd /root/.cache/tauri \
       "https://github.com/tauri-apps/binary-releases/releases/download/apprun-old/AppRun-x86_64|AppRun-x86_64" \
       "https://github.com/tauri-apps/binary-releases/releases/download/linuxdeploy/linuxdeploy-x86_64.AppImage|linuxdeploy-x86_64.AppImage" \
       "https://raw.githubusercontent.com/tauri-apps/linuxdeploy-plugin-gtk/master/linuxdeploy-plugin-gtk.sh|linuxdeploy-plugin-gtk.sh" \
+      "https://raw.githubusercontent.com/tauri-apps/linuxdeploy-plugin-gstreamer/master/linuxdeploy-plugin-gstreamer.sh|linuxdeploy-plugin-gstreamer.sh" \
       "https://github.com/linuxdeploy/linuxdeploy-plugin-appimage/releases/download/continuous/linuxdeploy-plugin-appimage-x86_64.AppImage|linuxdeploy-plugin-appimage.AppImage" \
     ; do \
       curl -fL --retry 8 --retry-delay 3 --retry-all-errors \
@@ -36,7 +44,7 @@ RUN mkdir -p /root/.cache/tauri && cd /root/.cache/tauri \
            -o "${u#*|}" "${u%|*}" || exit 1; \
     done \
     && chmod +x AppRun-x86_64 linuxdeploy-x86_64.AppImage linuxdeploy-plugin-appimage.AppImage \
-       linuxdeploy-plugin-gtk.sh
+       linuxdeploy-plugin-gtk.sh linuxdeploy-plugin-gstreamer.sh
 
 # appimagetool wants fuse, which a container usually cannot give it
 ENV APPIMAGE_EXTRACT_AND_RUN=1

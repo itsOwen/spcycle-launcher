@@ -45,6 +45,10 @@ const COPY: Record<Phase, { head: string; body: string }> = {
     body: "Deleting only the files and directories this launcher can prove it created.",
   },
   UPDATING: { head: "Updating the launcher", body: "The launcher will restart when it is done." },
+  EDITING: {
+    head: "Editing the stash",
+    body: "The launcher is holding the database while the stash tab reads or writes it.",
+  },
 };
 
 export function PlayTab({ snap, since }: { snap: Snapshot; since: number | null }) {

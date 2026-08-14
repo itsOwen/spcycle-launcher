@@ -10,7 +10,7 @@ interface Spec {
 }
 
 // one table, so a new phase cannot silently fall through to a dead button
-export const PHASE_SPEC: Record<Phase, Spec> = {
+const PHASE_SPEC: Record<Phase, Spec> = {
   NEEDS_COMPONENTS: { label: "Install", tone: "primary", action: "install" },
   NEEDS_GAME: { label: "Download", tone: "primary", action: "install" },
   INSTALLING_COMPONENTS: { label: "Installing", tone: "idle", action: null },
@@ -22,6 +22,7 @@ export const PHASE_SPEC: Record<Phase, Spec> = {
   PLAYING: { label: "Stop", tone: "danger", action: "stop" },
   UNINSTALLING: { label: "Removing", tone: "idle", action: null },
   UPDATING: { label: "Updating", tone: "idle", action: null },
+  EDITING: { label: "Editing", tone: "idle", action: null },
 };
 
 const TONE: Record<Tone, string> = {

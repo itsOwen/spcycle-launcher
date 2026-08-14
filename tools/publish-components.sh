@@ -1,14 +1,5 @@
 #!/usr/bin/env bash
-# publish the component assets to their own fixed tag.
-#
-# they are deliberately not on an app release. the launcher reads them from a tag
-# that never moves, so a launcher release cannot leave one behind and break
-# component installs for everyone on that platform. it also means the components
-# can be corrected without cutting a launcher release.
-#
-# the tag here must match COMPONENTS_TAG in src-tauri/src/components.rs.
-#
-#     ./tools/publish-components.sh [--publish]
+
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -36,8 +27,6 @@ for plat in windows linux; do
     }
     cp "artifacts/mongod-$plat.zip" "$STAGE/"
 
-    # the manifest must point at this tag, or the launcher fetches it from here and
-    # is then sent somewhere else for the archive it names
     grep -q "releases/download/$TAG/mongod-$plat.zip" "tools/components-$plat.json" || {
         echo "components-$plat.json does not point its mongod url at $TAG." >&2
         exit 1
@@ -54,8 +43,6 @@ if [ "$PUBLISH" != "--publish" ]; then
     exit 0
 fi
 
-# --latest=false matters: this tag carries no latest.json, and if github called it
-# the newest release every updater would fetch a 404 instead of an update
 gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" \
     --title "Components (${TAG#components-})" \
     --notes "The launcher fetches its components from this tag, not from the newest release. Not an app release — see the versioned tags for installers." \

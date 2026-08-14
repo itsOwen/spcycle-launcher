@@ -8,11 +8,13 @@ mod depot;
 mod game;
 mod launch;
 mod logs;
+mod media;
 mod mongo;
 mod preflight;
 mod presence;
 mod proc;
 mod settings;
+mod stash;
 mod state;
 mod uninstall;
 
@@ -31,8 +33,6 @@ pub struct AppState {
     services: Services,
 }
 
-// a std mutex rather than tokio's: every access is a short field read or write
-// with no await held across it, and BusyGuard::drop cannot await
 #[derive(Default)]
 pub struct Shared(Mutex<AppState>);
 
@@ -43,15 +43,11 @@ impl Shared {
     }
 }
 
-// releasing it is a Drop, not a manual call, so an early return cannot leave the
-// launcher wedged
 pub struct BusyGuard {
     app: AppHandle,
 }
 
 impl BusyGuard {
-    // a single user action can pass through more than one stage. releasing the
-    // claim between them would let a second click slip in, so only the label moves.
     pub fn relabel(&self, now: Busy) {
         self.app.state::<Shared>().with(|s| s.busy = Some(now));
         emit_phase(&self.app);
@@ -93,8 +89,6 @@ pub enum CommandError {
     Busy { current: &'static str },
     #[error("Paused.")]
     Paused,
-    #[error("Not available yet in this build.")]
-    NotYet,
     #[error("{0}")]
     Message(String),
 }
@@ -105,6 +99,12 @@ impl From<game::GameError> for CommandError {
             game::GameError::Paused => CommandError::Paused,
             other => CommandError::Message(other.to_string()),
         }
+    }
+}
+
+impl From<stash::StashError> for CommandError {
+    fn from(e: stash::StashError) -> Self {
+        CommandError::Message(e.to_string())
     }
 }
 
@@ -133,7 +133,6 @@ pub fn show_pause(app: &AppHandle, pausable: bool) {
 }
 
 pub const NOTIFY_INFO: u8 = 0;
-pub const NOTIFY_ERROR: u8 = 2;
 
 // level: 0 info, 1 success, 2 error
 pub fn notify(app: &AppHandle, text: &str, level: u8) {
@@ -155,8 +154,6 @@ pub fn set_service(app: &AppHandle, set: impl FnOnce(&mut Services)) {
 
 // ---- phase ----
 
-// cached, but only a successful read: memoising the 0 from one transient failure
-// pinned depot_ok false for the process and stuck the phase at NEEDS_GAME.
 fn bundled_manifest_id(app: &AppHandle) -> u64 {
     static ID: std::sync::OnceLock<u64> = std::sync::OnceLock::new();
     if let Some(id) = ID.get() {
@@ -171,8 +168,6 @@ fn bundled_manifest_id(app: &AppHandle) -> u64 {
     }
 }
 
-// derived from disk on every call, never stored, so a stale marker cannot wedge
-// the ui
 fn current_phase(app: &AppHandle) -> Phase {
     if let Some(busy) = app.state::<Shared>().with(|s| s.busy) {
         return busy.into();
@@ -180,8 +175,6 @@ fn current_phase(app: &AppHandle) -> Phase {
 
     let dir = settings::game_directory(app);
 
-    // the game may be running without us; Ready would offer a second launch.
-    // cached, because enumerating costs ~55 ms on a 3-second poll.
     if proc::observe_cached(&dir).game {
         return Phase::Playing;
     }
@@ -235,8 +228,6 @@ async fn launcher_state(app: AppHandle) -> Snapshot {
     let manifest_id = bundled_manifest_id(&app);
     let phase = current_phase(&app);
 
-    // mongo and the server are ours, so their lamps come from what we started.
-    // steam is not, so it is read from the same cached scan current_phase just used.
     let mut services = app.state::<Shared>().with(|s| s.services);
     if !matches!(phase, Phase::Starting | Phase::Playing) {
         services.steam = if proc::observe_cached(&dir).steam {
@@ -276,13 +267,11 @@ fn log_tail(app: AppHandle, which: String, lines: usize) -> String {
         "mongod" => mongo::tail(&app, lines),
         "server" => logs::tail(&settings::log_path(&app, "server.log"), lines),
         "loader" => logs::tail(&settings::log_path(&app, "loader.log"), lines),
-        "game" => logs::tail(&settings::log_path(&app, "game.log"), lines),
+        "game" => logs::tail(&settings::game_log(&app), lines),
         _ => logs::tail(&settings::launcher_log(&app), lines),
     }
 }
 
-// the about tab's links. an allowlist because this is a webview handing the host
-// a string to open: anything but http(s) is a scheme that runs something.
 #[tauri::command]
 fn open_link(url: String) -> CmdResult<()> {
     if !url.starts_with("https://") && !url.starts_with("http://") {
@@ -331,9 +320,6 @@ async fn pick_game_directory(app: AppHandle) -> CmdResult<Option<String>> {
     Ok(Some(path))
 }
 
-// declared here so the frontend's contract is complete and a mis-wired button
-// fails loudly instead of silently
-
 #[tauri::command]
 async fn depot_info(app: AppHandle) -> CmdResult<depot::DepotInfo> {
     Ok(depot::describe(&app)?)
@@ -346,6 +332,16 @@ async fn detect_compat_tools() -> compat::CompatInfo {
     tokio::task::spawn_blocking(compat::detect)
         .await
         .unwrap_or_default()
+}
+
+#[tauri::command]
+async fn media_support() -> media::MediaSupport {
+    media::detect_cached()
+}
+
+#[tauri::command]
+async fn media_url(app: AppHandle) -> CmdResult<String> {
+    media::serve(&app).map_err(CommandError::Message)
 }
 
 #[cfg(windows)]
@@ -384,8 +380,6 @@ async fn install_components(app: AppHandle) -> CmdResult<()> {
 
 #[tauri::command]
 async fn install_game(app: AppHandle) -> CmdResult<()> {
-    // one claim for the whole action, relabelled as it progresses. claiming twice
-    // would leave a gap in which a second press could start a competing pass.
     let needs_components = !components::complete(&app);
     let busy = claim(
         &app,
@@ -448,8 +442,6 @@ async fn verify_and_repair(app: AppHandle) -> CmdResult<()> {
 
 #[tauri::command]
 async fn play(app: AppHandle) -> CmdResult<i32> {
-    // held for the whole session, so nothing can start a depot pass over files the
-    // running game has open
     let _busy = claim(&app, Busy::Playing)?;
     match game::play(&app).await {
         Ok(code) => Ok(code),
@@ -493,6 +485,62 @@ async fn uninstall_everything(app: AppHandle) -> CmdResult<()> {
     }
 }
 
+// ---- stash editor ----
+
+#[tauri::command]
+async fn stash_load(app: AppHandle) -> CmdResult<stash::Stash> {
+    stash::load(&app).await.map_err(Into::into)
+}
+
+#[tauri::command]
+async fn stash_save(
+    app: AppHandle,
+    playfab_id: String,
+    items: String,
+    balance: Option<String>,
+) -> CmdResult<()> {
+    let _busy = claim(&app, Busy::Stash)?;
+    stash::save(&app, &playfab_id, &items, balance.as_deref())
+        .await
+        .map_err(Into::into)
+}
+
+#[tauri::command]
+async fn stash_backups(app: AppHandle) -> CmdResult<Vec<stash::Backup>> {
+    stash::backups(&app).map_err(Into::into)
+}
+
+#[tauri::command]
+async fn stash_backup_read(app: AppHandle, name: String) -> CmdResult<stash::Stash> {
+    stash::read_backup(&app, &name).map_err(Into::into)
+}
+
+#[tauri::command]
+async fn stash_snapshot(
+    app: AppHandle,
+    playfab_id: String,
+    items: String,
+    balance: Option<String>,
+) -> CmdResult<String> {
+    stash::snapshot_now(&app, &playfab_id, &items, balance.as_deref()).map_err(Into::into)
+}
+
+#[tauri::command]
+async fn stash_stop_db(app: AppHandle) -> CmdResult<()> {
+    let _busy = claim(&app, Busy::Stash)?;
+    stash::stop_db(&app).await.map_err(Into::into)
+}
+
+#[tauri::command]
+async fn stash_backup_delete(app: AppHandle, name: String) -> CmdResult<()> {
+    stash::delete_backup(&app, &name).map_err(Into::into)
+}
+
+#[tauri::command]
+async fn stash_backup_rename(app: AppHandle, name: String, to: String) -> CmdResult<String> {
+    stash::rename_backup(&app, &name, &to).map_err(Into::into)
+}
+
 // ---- helpers ----
 
 fn open_path(path: &std::path::Path) -> CmdResult<()> {
@@ -505,8 +553,6 @@ fn open_path(path: &std::path::Path) -> CmdResult<()> {
         .map_err(|e| CommandError::Message(format!("Could not open {}: {e}", path.display())))
 }
 
-// walks up to the nearest existing ancestor, because the game directory may not
-// exist yet
 pub fn free_space(path: &std::path::Path) -> Option<u64> {
     let mut probe = path;
     loop {
@@ -539,8 +585,6 @@ pub fn run() {
         }))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_store::Builder::default().build())
-        // the default LogDir target names the file after the product, which the ui's
-        // reader never matched. name it explicitly and both sides share one stem.
         .plugin(
             tauri_plugin_log::Builder::new()
                 .targets([
@@ -570,8 +614,6 @@ pub fn run() {
                 log::warn!("could not create the tray icon: {e}");
             }
 
-            // without this, an unreadable blob shows up only as a download that
-            // never completes
             match depot::describe(&handle) {
                 Ok(d) => log::info!(
                     "depot {} manifest {} — {} files, {} to download",
@@ -596,6 +638,8 @@ pub fn run() {
             pick_game_directory,
             depot_info,
             detect_compat_tools,
+            media_support,
+            media_url,
             preflight,
             install_components,
             install_game,
@@ -605,6 +649,14 @@ pub fn run() {
             stop_game,
             uninstall_plan,
             uninstall_everything,
+            stash_load,
+            stash_save,
+            stash_backups,
+            stash_backup_read,
+            stash_backup_delete,
+            stash_backup_rename,
+            stash_stop_db,
+            stash_snapshot,
         ])
         .build(tauri::generate_context!())
         .expect("error while building the launcher")

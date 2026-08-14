@@ -43,8 +43,6 @@ function Row({ check }: { check: Check }) {
   );
 }
 
-// split because the emptiness check precedes useDialog, and a hook cannot sit
-// behind an early return
 export function PreflightDialog({
   report,
   onDismiss,

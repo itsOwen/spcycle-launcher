@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import * as ipc from "@/lib/ipc";
 import type { LogKind, ServiceState, Services } from "@/lib/ipc";
-import { Panel, Row } from "./kit";
+import { Btn, Panel, Row } from "./kit";
 
 const LOGS: LogKind[] = ["launcher", "mongod", "server", "loader", "game"];
 
@@ -22,6 +22,17 @@ const STATE_COLOR: Record<ServiceState, string> = {
 export function ServerTab({ services }: { services: Services }) {
   const [which, setWhich] = useState<LogKind>("launcher");
   const [text, setText] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  function copy() {
+    navigator.clipboard.writeText(text).then(
+      () => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      },
+      () => setCopied(false),
+    );
+  }
 
   useEffect(() => {
     let live = true;
@@ -84,6 +95,11 @@ export function ServerTab({ services }: { services: Services }) {
               {l}
             </button>
           ))}
+          <div className="ml-auto pr-1">
+            <Btn onClick={copy} disabled={!text}>
+              {copied ? "Copied" : "Copy"}
+            </Btn>
+          </div>
         </header>
         <pre className="min-h-0 flex-1 overflow-auto bg-panel-2 p-3 text-[0.75rem] leading-relaxed text-ink-2 select-text">
           {text || "(empty)"}

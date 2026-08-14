@@ -5,11 +5,15 @@ import { LazyStore } from "@tauri-apps/plugin-store";
 const STORE = "storage.json";
 
 // every key the backend reads, with the default it falls back to
-export const DEFAULTS = {
+const DEFAULTS = {
   game_directory: "" as string,
   proton_path: "" as string,
   autorun_steam: true as boolean,
   discord_presence: true as boolean,
+  video_backdrop: true as boolean,
+  video_sound: true as boolean,
+  // percent, so a hand-edited storage.json cannot slip a float past the type guard
+  video_volume: 60 as number,
   mongo_port: 0 as number,
   depot_blob_path: "" as string,
 };
@@ -55,8 +59,7 @@ export function useSettings() {
         await store.save();
         setError(null);
       } catch (e) {
-        // callers do not await this, and an unhandled rejection would leave the
-        // control showing a value that was never written
+
         setError(`${key} could not be saved: ${String(e)}`);
         await refresh();
       }

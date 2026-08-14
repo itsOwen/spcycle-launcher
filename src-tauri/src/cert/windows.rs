@@ -1,6 +1,3 @@
-// the current user's trusted root store, via cryptoapi rather than powershell.
-// per-user is what makes this work without administrator rights.
-
 use std::ffi::c_void;
 
 use windows_sys::Win32::Foundation::GetLastError;
@@ -60,8 +57,6 @@ fn last_error() -> u32 {
 pub fn add_to_current_user_root(der: &[u8]) -> Result<(), CertError> {
     let store = Store::open()?;
 
-    // safety: der is valid for der.len() bytes. REPLACE_EXISTING makes re-adding
-    // the same certificate a no-op rather than an error.
     let ok = unsafe {
         CertAddEncodedCertificateToStore(
             store.0,
